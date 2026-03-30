@@ -1,4 +1,4 @@
-package com.example.ecology_project
+package com.example.tmp
 
 import io.flutter.embedding.android.FlutterActivity
 
