@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:ecology_project/log.dart';
 import 'package:multicast_dns/multicast_dns.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -5,6 +6,12 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class NetworkManager {
   WebSocketChannel? channel;
   final String mDnsHostname;
+
+  final StreamController<String> _messageController =
+      StreamController<String>.broadcast();
+  Stream<String> get messageStream => _messageController.stream;
+
+  Function(String status)? onStatusUpdate;
 
   NetworkManager({this.mDnsHostname = "gigachad-esp.local"});
 
@@ -15,13 +22,12 @@ class NetworkManager {
     String? resolvedIp;
 
     try {
-      // Look up the IPv4 address for the given hostname
       await for (final IPAddressResourceRecord record
           in client.lookup<IPAddressResourceRecord>(
             ResourceRecordQuery.addressIPv4(hostname),
           )) {
         resolvedIp = record.address.address;
-        break; // Stop after finding the first match
+        break;
       }
     } catch (e) {
       logger.e("mDNS Lookup failed: $e");
@@ -32,44 +38,39 @@ class NetworkManager {
     return resolvedIp;
   }
 
-  Future<String?> connect({
-    required Function(String status) onStatus,
-    required Function(String message) onMessage,
-    required Function(String error) onError,
-    required Function() onDone,
-  }) async {
+  Future<String?> connect() async {
     try {
-      onStatus("Resolving $mDnsHostname...");
+      onStatusUpdate?.call("Resolving $mDnsHostname...");
       String? ipAddress = await resolveMdns(mDnsHostname);
 
       if (ipAddress == null) {
-        onStatus("Failed to resolve $mDnsHostname");
+        onStatusUpdate?.call("Failed to resolve $mDnsHostname");
         return null;
       }
 
-      onStatus("Connecting to $ipAddress...");
+      onStatusUpdate?.call("Connecting to $ipAddress...");
 
-      channel = WebSocketChannel.connect(Uri.parse('ws://$ipAddress/ws'));
+      channel = WebSocketChannel.connect(Uri.parse('ws://$ipAddress:81'));
 
       channel!.stream.listen(
         (message) {
           logger.i("RECEIVED: $message");
-          onMessage(message.toString());
+          _messageController.add(message.toString());
         },
         onError: (error) {
           logger.e("WS ERROR: $error");
-          onError(error.toString());
+          onStatusUpdate?.call("Error: $error");
         },
         onDone: () {
           logger.i("WS CLOSED");
-          onDone();
+          onStatusUpdate?.call("Connection closed");
         },
       );
 
-      onStatus("Connected via $ipAddress");
+      onStatusUpdate?.call("Connected via $ipAddress");
       return ipAddress;
     } catch (e) {
-      onStatus("Connection failed: $e");
+      onStatusUpdate?.call("Connection failed: $e");
       return null;
     }
   }
@@ -82,5 +83,6 @@ class NetworkManager {
 
   void dispose() {
     channel?.sink.close();
+    _messageController.close();
   }
 }
