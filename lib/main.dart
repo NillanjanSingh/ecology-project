@@ -1,7 +1,5 @@
-import 'package:ecology_project/log.dart';
+import 'package:ecology_project/network.dart';
 import 'package:flutter/material.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:multicast_dns/multicast_dns.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,89 +22,31 @@ class WebSocketTestPage extends StatefulWidget {
 }
 
 class _WebSocketTestPageState extends State<WebSocketTestPage> {
-  WebSocketChannel? channel;
   String status = "Not connected";
   String receivedMessage = "";
 
   final TextEditingController controller = TextEditingController();
-  final String mDnsHostname =
-      "gigachad-esp.local"; 
-
-  // --- NEW: Helper method to resolve mDNS ---
-  Future<String?> resolveMdns(String hostname) async {
-    setState(() => status = "Resolving $hostname...");
-
-    final MDnsClient client = MDnsClient();
-    await client.start();
-
-    String? resolvedIp;
-
-    try {
-      // Look up the IPv4 address for the given hostname
-      await for (final IPAddressResourceRecord record
-          in client.lookup<IPAddressResourceRecord>(
-            ResourceRecordQuery.addressIPv4(hostname),
-          )) {
-        resolvedIp = record.address.address;
-        break; // Stop after finding the first match
-      }
-    } catch (e) {
-      logger.e("mDNS Lookup failed: $e");
-    } finally {
-      client.stop();
-    }
-
-    return resolvedIp;
-  }
+  final NetworkManager network = NetworkManager();
 
   Future<void> connect() async {
-    try {
-      // 1. Resolve the hostname to an IP address first
-      String? ipAddress = await resolveMdns(mDnsHostname);
-
-      if (ipAddress == null) {
-        setState(() => status = "Failed to resolve $mDnsHostname");
-        return;
-      }
-
-      setState(() => status = "Connecting to $ipAddress...");
-
-      // 2. Connect using the resolved IP address
-      channel = WebSocketChannel.connect(Uri.parse('ws://$ipAddress/ws'));
-
-      channel!.stream.listen(
-        (message) {
-          logger.i("RECEIVED: $message");
-          setState(() {
-            receivedMessage = message.toString();
-          });
-        },
-        onError: (error) {
-          logger.e("WS ERROR: $error");
-          setState(() => status = "Error: $error");
-        },
-        onDone: () {
-          logger.i("WS CLOSED");
-          setState(() => status = "Connection closed");
-        },
-      );
-
-      setState(() => status = "Connected via $ipAddress");
-    } catch (e) {
-      setState(() => status = "Connection failed: $e");
-    }
+    await network.connect(
+      onStatus: (s) => setState(() => status = s),
+      onMessage: (m) => setState(() => receivedMessage = m),
+      onError: (e) => setState(() => status = "Error: $e"),
+      onDone: () => setState(() => status = "Connection closed"),
+    );
   }
 
   void sendMessage() {
-    if (channel != null && controller.text.isNotEmpty) {
-      channel!.sink.add(controller.text);
+    if (controller.text.isNotEmpty) {
+      network.sendMessage(controller.text);
       controller.clear();
     }
   }
 
   @override
   void dispose() {
-    channel?.sink.close();
+    network.dispose();
     controller.dispose();
     super.dispose();
   }
