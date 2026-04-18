@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:ecology_project/log.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:multicast_dns/multicast_dns.dart';
@@ -51,7 +51,7 @@ class _WebSocketTestPageState extends State<WebSocketTestPage> {
         break; // Stop after finding the first match
       }
     } catch (e) {
-      print("mDNS Lookup failed: $e");
+      logger.e("mDNS Lookup failed: $e");
     } finally {
       client.stop();
     }
@@ -76,17 +76,17 @@ class _WebSocketTestPageState extends State<WebSocketTestPage> {
 
       channel!.stream.listen(
         (message) {
-          print("RECEIVED: $message");
+          logger.i("RECEIVED: $message");
           setState(() {
             receivedMessage = message.toString();
           });
         },
         onError: (error) {
-          print("WS ERROR: $error");
+          logger.e("WS ERROR: $error");
           setState(() => status = "Error: $error");
         },
         onDone: () {
-          print("WS CLOSED");
+          logger.i("WS CLOSED");
           setState(() => status = "Connection closed");
         },
       );
