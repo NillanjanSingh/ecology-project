@@ -32,10 +32,10 @@ class HomePage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -76,7 +76,7 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 const Spacer(flex: 2),
-                
+
                 // Action Buttons
                 _buildMenuButton(
                   context: context,
@@ -127,15 +127,18 @@ class HomePage extends StatelessWidget {
       height: 60,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isSecondary 
-              ? Colors.white.withOpacity(0.15)
+          backgroundColor: isSecondary
+              ? Colors.white.withValues(alpha: 0.15)
               : Colors.white,
           foregroundColor: isSecondary ? Colors.white : Colors.teal.shade900,
           elevation: isSecondary ? 0 : 8,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
-            side: isSecondary 
-                ? BorderSide(color: Colors.white.withOpacity(0.5), width: 1)
+            side: isSecondary
+                ? BorderSide(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    width: 1,
+                  )
                 : BorderSide.none,
           ),
         ),
