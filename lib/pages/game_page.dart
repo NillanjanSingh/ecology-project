@@ -70,6 +70,10 @@ class _GamePageState extends State<GamePage> {
         icon = Icons.videogame_asset;
         color = Colors.purple;
         break;
+      case MessageType.cardAction:
+        icon = Icons.play_arrow;
+        color = Colors.green;
+        break;
       case MessageType.unknown:
         icon = Icons.help_outline;
         color = Colors.grey;

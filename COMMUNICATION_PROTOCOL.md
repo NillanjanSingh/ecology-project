@@ -69,3 +69,18 @@ Can be used to sync the overall state of the game between devices or boards.
   }
 }
 ```
+
+#### 4. Card Action (`card_action`)
+Sent from the App to ESP32 when a specific card effect is executed or chosen by the user in the app.
+
+**Example:**
+```json
+{
+  "type": "card_action",
+  "payload": {
+    "action": "implement_policy",
+    "policy_id": "air_policy_A",
+    "cost": 50
+  }
+}
+```

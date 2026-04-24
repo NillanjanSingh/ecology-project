@@ -1,7 +1,7 @@
 import 'package:ecology_project/log.dart';
 import 'dart:convert';
 
-enum MessageType { rfid, encoder, gameState, unknown }
+enum MessageType { rfid, encoder, cardAction, gameState, unknown }
 
 class ProtocolMessage {
   final MessageType type;
@@ -22,6 +22,9 @@ class ProtocolMessage {
           break;
         case 'encoder':
           type = MessageType.encoder;
+          break;
+        case 'card_action':
+          type = MessageType.cardAction;
           break;
         case 'game_state':
           type = MessageType.gameState;
@@ -46,6 +49,9 @@ class ProtocolMessage {
         break;
       case MessageType.encoder:
         typeStr = 'encoder';
+        break;
+      case MessageType.cardAction:
+        typeStr = 'card_action';
         break;
       case MessageType.gameState:
         typeStr = 'game_state';

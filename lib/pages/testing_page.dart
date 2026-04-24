@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../network.dart';
-import 'game_page.dart';
+import 'testing_console_page.dart';
 
 class TestingModePage extends StatefulWidget {
   final NetworkManager network;
@@ -33,7 +33,7 @@ class _TestingModePageState extends State<TestingModePage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => GamePage(network: widget.network),
+            builder: (context) => TestingConsolePage(network: widget.network),
           ),
         );
       }
