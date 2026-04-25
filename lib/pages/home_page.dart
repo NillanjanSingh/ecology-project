@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../network.dart';
 import 'testing_page.dart';
+import 'game_page.dart';
 
 class HomePage extends StatelessWidget {
   final NetworkManager network;
@@ -83,10 +84,10 @@ class HomePage extends StatelessWidget {
                   icon: Icons.play_arrow_rounded,
                   label: "NEW GAME",
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Game setup coming soon!'),
-                        duration: Duration(seconds: 2),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GamePage(network: network),
                       ),
                     );
                   },
