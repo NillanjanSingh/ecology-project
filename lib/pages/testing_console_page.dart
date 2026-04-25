@@ -107,12 +107,11 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
         payload = {
           "status": _statusController.text,
           "active_city": _activeCityController.text,
-          "eliminated_cities":
-              _eliminatedCitiesController.text
-                  .split(",")
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .toList(),
+          "eliminated_cities": _eliminatedCitiesController.text
+              .split(",")
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty)
+              .toList(),
         };
         break;
       case MessageType.cardAction:
@@ -141,24 +140,23 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
   void _showLogDetails(LogEntry log) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(
-              "${log.isIncoming ? 'Received' : 'Sent'} ${log.message.type.name}",
-            ),
-            content: SingleChildScrollView(
-              child: SelectableText(
-                log.rawString,
-                style: const TextStyle(fontFamily: 'monospace'),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close"),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text(
+          "${log.isIncoming ? 'Received' : 'Sent'} ${log.message.type.name}",
+        ),
+        content: SingleChildScrollView(
+          child: SelectableText(
+            log.rawString,
+            style: const TextStyle(fontFamily: 'monospace'),
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Close"),
+          ),
+        ],
+      ),
     );
   }
 
@@ -274,15 +272,14 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
                 DropdownButton<MessageType>(
                   value: _selectedType,
                   isExpanded: true,
-                  items:
-                      MessageType.values
-                          .map(
-                            (t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(t.name.toUpperCase()),
-                            ),
-                          )
-                          .toList(),
+                  items: MessageType.values
+                      .map(
+                        (t) => DropdownMenuItem(
+                          value: t,
+                          child: Text(t.name.toUpperCase()),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (val) {
                     if (val != null) setState(() => _selectedType = val);
                   },
