@@ -1,200 +1,127 @@
-# Ecology Game - Communication Protocol
+# Smart City Board Game - WebSocket Communication Protocol
 
-- Note: This is WIP until the final protocol is defined
-
-This document outlines the JSON-based communication protocol to be used between the Flutter mobile application and the ESP32 hardware board via WebSockets.
+This document outlines the finalized JSON-based communication protocol between the Flutter mobile application (Mayor's Terminal) and the ESP32 hardware board via WebSockets. 
 
 ## Overview
-- **Transport**: WebSockets (WS)
-- **Format**: JSON strings
-- **mDNS Hostname**: `gigachad-esp.local`
 
-The Flutter app will resolve the mDNS hostname to get the ESP32's IP address and will connect to `ws://<ESP_IP>:81`.
-
-## Message Structure
-
-Every message sent from the ESP32 to the app (and vice-versa) MUST follow this generic structure:
-
-```json
-{
-  "type": "<MESSAGE_TYPE>",
-  "payload": {
-     // Specific data associated with the message type
-  }
-}
-```
+* **Transport:** WebSockets (WS)
+* **Format:** JSON strings (Flat structure)
+* **mDNS Hostname:** `gigachad-esp.local`
+* **Port:** `81`
+* **Connection URI:** `ws://<ESP_IP>:81/`
 
 ---
 
-### Supported Message Types
+## Server-to-Client (ESP32 → Flutter)
 
-#### 1. RFID Card Read (`rfid`)
-Sent by the ESP32 when an RFID card is placed on one of the readers.
+These messages are broadcasted from the ESP32 to connected Flutter clients to sync game states and prompt user interactions.
 
-**Direction**: ESP32 → App
-
-```json
-{
-  "type": "rfid",
-  "payload": {
-    "uid": "04A1B2C3D4E5F6",
-    "board_id": 1
-  }
-}
-```
-
-#### 2. Rotary Encoder Event (`encoder`)
-Sent by the ESP32 when the user interacts with the rotary encoder.
-
-**Direction**: ESP32 → App
+### 1. Turn Synchronization (`turn`)
+Broadcasted immediately upon connection and after every completed player action to indicate whose turn it is.
 
 ```json
 {
-  "type": "encoder",
-  "payload": {
-    "direction": 1,
-    "value": 15
-  }
+  "type": "turn",
+  "player": 0 
 }
 ```
+* `player`: Integer `0-3` denoting the active player.
 
-#### 3. Game State Update (`game_state`)
-Syncs the overall game status and phase between devices.
-
-**Direction**: ESP32 → App
+### 2. Game State Broadcast (`game_state`)
+Sent globally whenever the mathematical state of the game changes (e.g., after recalculations). Used by the app to render dashboards.
 
 ```json
 {
   "type": "game_state",
-  "payload": {
-    "status": "in_progress",
-    "faction": "natural_resources",
-    "active_city": "Natural",
-    "eliminated_cities": ["Tech"]
-  }
-}
-```
-
-#### 4. Card Action (`card_action`)
-Sent from the App to ESP32 when a specific card effect is executed or chosen by the user in the app.
-
-**Example:**
-```json
-{
-  "type": "card_action",
-  "payload": {
-    "action": "implement_policy",
-    "policy_id": "air_policy_A",
-    "cost": 50
-  }
-}
-```
-
-#### 5. Player State Sync (`sync_state`)
-ESP32 sends the latest computed metrics, bank balance, active cards, and lap number to the app. This is the primary data feed for the Mayor's Terminal dashboard.
-
-**Direction**: ESP32 → App
-
-```json
-{
-  "type": "sync_state",
-  "payload": {
-    "metrics": {
-      "sustainability": 650.0,
-      "smart": 500.0,
-      "livability": 720.0,
-      "economy": 580.0
-    },
-    "bank_balance": 1500,
-    "current_lap": 3,
-    "faction": "natural_resources",
-    "active_cards": [
-      {
-        "id": "disaster_01",
-        "name": "Earthquake",
-        "type": "disaster",
-        "description": "Infrastructure damage -15% Economy",
-        "remaining_laps": 2
-      },
-      {
-        "id": "policy_01",
-        "name": "Green Initiative",
-        "type": "policy",
-        "description": "+10% Sustainability per lap",
-        "remaining_laps": 4
+  "players": [
+    {
+      "faction": 0, 
+      "pos": 14,
+      "bankBalance": 1250.0,
+      "totalScore": 2500.5,
+      "isInnerRing": false,
+      "isEliminated": false,
+      "wonGame": false,
+      "laps": 3,
+      "factors": {
+        "sustainability": 45.2,
+        "smart": 60.0,
+        "livability": 55.0,
+        "economy": 70.1
       }
-    ]
-  }
-}
-```
-
-#### 6. Purchase Prompt (`purchase_prompt`)
-ESP32 asks the player if they want to buy an available infrastructure tile.
-
-**Direction**: ESP32 → App
-
-```json
-{
-  "type": "purchase_prompt",
-  "payload": {
-    "name": "Solar Farm",
-    "description": "A large solar panel array that generates clean energy.",
-    "cost": 350,
-    "effects": {
-      "sustainability": 50,
-      "economy": 20
     }
-  }
+  ]
 }
 ```
+* `faction`: Enum (`0`=Natural, `1`=Software, `2`=Industrial, `3`=Financial).
+* *Note: The `players` array will contain exactly 4 objects corresponding to players 0 through 3.*
 
-#### 7. Purchase Response (`purchase_response`)
-App tells the ESP32 whether the player chose to buy or skip.
-
-**Direction**: App → ESP32
+### 3. Movement Notification (`move`)
+Triggered when the physical rotary encoder spins and a player lands on a tile. The Flutter app uses this to render movement and trigger action modals.
 
 ```json
 {
-  "type": "purchase_response",
-  "payload": {
-    "action": "buy"
-  }
+  "type": "move",
+  "player": 0,
+  "tileType": 1, 
+  "spin": 5,
+  "infraId": 12, 
+  "infraName": "Solar Power Plant", 
+  "cost": 200.0 
 }
 ```
-`action` is either `"buy"` or `"skip"`.
+* `tileType`: Enum (`0`=START, `1`=INFRA, `2`=POLICY_ZONE, `3`=EVENT_ZONE, `4`=DISASTER_ZONE, `5`=EMPTY).
+* *Note: `infraId`, `infraName`, and `cost` are only included if `tileType == 1`.*
 
-#### 8. Card Decision Prompt (`card_decision_prompt`)
-ESP32 asks the player to make an A/B choice on a Policy or Event card.
-
-**Direction**: ESP32 → App
+### 4. RFID Card Scanned (`card_scanned`)
+Sent when a physical card is tapped to the RFID reader. Prompts the Flutter app to display the card details and choices.
 
 ```json
 {
-  "type": "card_decision_prompt",
-  "payload": {
-    "card_id": "policy_02",
-    "card_title": "Carbon Tax Regulation",
-    "description": "The city council proposes a new carbon tax.",
-    "choice_a": "Implement Strict Tax",
-    "choice_a_desc": "+80 Sustainability, -40 Economy",
-    "choice_b": "Relaxed Guidelines",
-    "choice_b_desc": "+20 Sustainability, +30 Economy"
-  }
+  "type": "card_scanned",
+  "player": 0,
+  "uid": "uid00",
+  "cardIdx": 0,
+  "cardName": "Carbon Tax",
+  "cardType": "Policy", 
+  "optionA": "Aggressive",
+  "optionB": "Moderate"
 }
 ```
+* `cardType`: String indicating type (`"Policy"`, `"Event-1"`, `"Event-2"`, `"Disaster"`).
 
-#### 9. Card Decision Response (`card_decision_response`)
-App sends the player's selected choice back to the ESP32.
+---
 
-**Direction**: App → ESP32
+## Client-to-Server (Flutter → ESP32)
+
+These messages are sent from the Flutter app to the ESP32 in response to prompts. **The ESP32 will pause the game loop and wait for these responses before advancing the turn.**
+
+### 5. Infrastructure Purchase Response (`buy_infra`)
+Sent after a player lands on an infrastructure tile (`tileType = 1`) and interacts with the Buy/Skip modal.
 
 ```json
 {
-  "type": "card_decision_response",
-  "payload": {
-    "card_id": "policy_02",
-    "choice": "A"
-  }
+  "type": "buy_infra",
+  "player": 0, 
+  "infraId": 12,
+  "accept": true 
 }
 ```
-`choice` is either `"A"` or `"B"`.
+* `player`: Must match the active player's index.
+* `accept`: Boolean (`true` = Buy, `false` = Skip).
+
+### 6. Card Choice Response (`card_choice`)
+Sent after the player resolves a scanned card.
+
+> **Crucial Implementation Note for Forced Outcomes:** > For **Event-2** and **Disaster** cards, the Flutter app must **NOT** allow the user to freely pick their choice. Instead, the Flutter app must simulate a randomized outcome (e.g., rolling a digital die), display that randomized result to the user, and automatically send the corresponding `choice` back to the ESP32.
+
+```json
+{
+  "type": "card_choice",
+  "player": 0, 
+  "cardIdx": 0,
+  "choice": 0 
+}
+```
+* `player`: Must match the active player's index.
+* `choice`: Integer (`0` = Option A, `1` = Option B).
