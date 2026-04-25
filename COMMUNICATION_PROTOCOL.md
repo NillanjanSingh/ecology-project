@@ -75,7 +75,22 @@ Syncs the overall game status and phase between devices.
 }
 ```
 
-#### 4. Player State Sync (`sync_state`)
+#### 4. Card Action (`card_action`)
+Sent from the App to ESP32 when a specific card effect is executed or chosen by the user in the app.
+
+**Example:**
+```json
+{
+  "type": "card_action",
+  "payload": {
+    "action": "implement_policy",
+    "policy_id": "air_policy_A",
+    "cost": 50
+  }
+}
+```
+
+#### 5. Player State Sync (`sync_state`)
 ESP32 sends the latest computed metrics, bank balance, active cards, and lap number to the app. This is the primary data feed for the Mayor's Terminal dashboard.
 
 **Direction**: ESP32 → App
@@ -113,7 +128,7 @@ ESP32 sends the latest computed metrics, bank balance, active cards, and lap num
 }
 ```
 
-#### 5. Purchase Prompt (`purchase_prompt`)
+#### 6. Purchase Prompt (`purchase_prompt`)
 ESP32 asks the player if they want to buy an available infrastructure tile.
 
 **Direction**: ESP32 → App
@@ -133,7 +148,7 @@ ESP32 asks the player if they want to buy an available infrastructure tile.
 }
 ```
 
-#### 6. Purchase Response (`purchase_response`)
+#### 7. Purchase Response (`purchase_response`)
 App tells the ESP32 whether the player chose to buy or skip.
 
 **Direction**: App → ESP32
@@ -148,7 +163,7 @@ App tells the ESP32 whether the player chose to buy or skip.
 ```
 `action` is either `"buy"` or `"skip"`.
 
-#### 7. Card Decision Prompt (`card_decision_prompt`)
+#### 8. Card Decision Prompt (`card_decision_prompt`)
 ESP32 asks the player to make an A/B choice on a Policy or Event card.
 
 **Direction**: ESP32 → App
@@ -168,7 +183,7 @@ ESP32 asks the player to make an A/B choice on a Policy or Event card.
 }
 ```
 
-#### 8. Card Decision Response (`card_decision_response`)
+#### 9. Card Decision Response (`card_decision_response`)
 App sends the player's selected choice back to the ESP32.
 
 **Direction**: App → ESP32

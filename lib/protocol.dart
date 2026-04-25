@@ -5,12 +5,13 @@ import 'dart:convert';
 ///
 /// To add a new message type:
 ///   1. Add the enum value here.
-///   2. Add the case in [ProtocolMessage.fromJsonString] (string → enum).
-///   3. Add the case in [ProtocolMessage.toJsonString] (enum → string).
+///   2. Add the case in [_typeFromString] (string → enum).
+///   3. Add the case in [_typeToString] (enum → string).
 ///   4. Optionally create a payload class below.
 enum MessageType {
   rfid,
   encoder,
+  cardAction, // Added in HEAD
   gameState, // Global game state (status, phase, etc.)
   syncState, // Per-player metrics sync from ESP32
   purchasePrompt, // ESP32 offers an infrastructure tile
@@ -33,6 +34,7 @@ class ProtocolMessage {
   static const Map<String, MessageType> _typeFromString = {
     'rfid': MessageType.rfid,
     'encoder': MessageType.encoder,
+    'card_action': MessageType.cardAction,
     'game_state': MessageType.gameState,
     'sync_state': MessageType.syncState,
     'purchase_prompt': MessageType.purchasePrompt,
@@ -44,6 +46,7 @@ class ProtocolMessage {
   static const Map<MessageType, String> _typeToString = {
     MessageType.rfid: 'rfid',
     MessageType.encoder: 'encoder',
+    MessageType.cardAction: 'card_action',
     MessageType.gameState: 'game_state',
     MessageType.syncState: 'sync_state',
     MessageType.purchasePrompt: 'purchase_prompt',
