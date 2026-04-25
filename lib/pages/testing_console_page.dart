@@ -123,6 +123,11 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
         };
         break;
       case MessageType.unknown:
+      case MessageType.syncState:
+      case MessageType.purchasePrompt:
+      case MessageType.purchaseResponse:
+      case MessageType.cardDecisionPrompt:
+      case MessageType.cardDecisionResponse:
         payload = {};
         break;
     }
@@ -234,6 +239,11 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
           ],
         );
       case MessageType.unknown:
+      case MessageType.syncState:
+      case MessageType.purchasePrompt:
+      case MessageType.purchaseResponse:
+      case MessageType.cardDecisionPrompt:
+      case MessageType.cardDecisionResponse:
         return const Text("Unknown payload");
     }
   }

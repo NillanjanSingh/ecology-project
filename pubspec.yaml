@@ -37,6 +37,8 @@ dependencies:
   web_socket_channel: ^2.4.0
   multicast_dns: ^0.3.3
   logger: ^2.7.0
+  fl_chart: ^0.68.0
+  provider: ^6.1.1
 
 dev_dependencies:
   flutter_test:
