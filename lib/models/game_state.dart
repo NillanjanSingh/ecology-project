@@ -304,6 +304,12 @@ class GameStateProvider extends ChangeNotifier {
           severity: 'info',
         );
         break;
+      case MessageType.lobbyState:
+      case MessageType.joinLobby:
+      case MessageType.playerReady:
+      case MessageType.gameStart:
+        // Lobby events are handled by the lobby screen; ignore in in-game state.
+        break;
       default:
         _addLog('Unknown message received', severity: 'warning');
         break;

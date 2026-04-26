@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../network.dart';
 import 'testing_page.dart';
-import 'game_page.dart';
+import 'lobby_page.dart';
 
 class HomePage extends StatelessWidget {
   final NetworkManager network;
@@ -87,7 +87,7 @@ class HomePage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => GamePage(network: network),
+                        builder: (context) => LobbyPage(network: network),
                       ),
                     );
                   },

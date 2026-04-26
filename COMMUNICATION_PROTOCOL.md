@@ -5,10 +5,67 @@ This document outlines the finalized JSON-based communication protocol between t
 ## Overview
 
 * **Transport:** WebSockets (WS)
-* **Format:** JSON strings (Flat structure)
+* **Format:** JSON strings using a `type` + `payload` envelope
 * **mDNS Hostname:** `gigachad-esp.local`
 * **Port:** `81`
 * **Connection URI:** `ws://<ESP_IP>:81/`
+
+---
+
+## Pre-Game Lobby Flow (Current App Behavior)
+
+Before gameplay starts, clients join a lobby and wait for ESP32 to signal start.
+
+### Lobby Sequence
+1. Flutter connects to ESP32 WebSocket.
+2. Flutter sends `join_lobby`.
+3. ESP32 broadcasts `lobby_state` updates as players join/ready.
+4. Flutter sends `player_ready` when user presses ready.
+5. ESP32 broadcasts `game_start` when all required players are ready.
+6. Fallback start signal: `game_state.payload.status` can be `playing`, `in_progress`, or `started`.
+
+### Lobby Messages
+
+#### Client → Server: Join Lobby (`join_lobby`)
+```json
+{
+  "type": "join_lobby",
+  "payload": {
+    "platform": "flutter"
+  }
+}
+```
+
+#### Client → Server: Ready Up (`player_ready`)
+```json
+{
+  "type": "player_ready",
+  "payload": {
+    "ready": true
+  }
+}
+```
+
+#### Server → Client: Lobby State (`lobby_state`)
+```json
+{
+  "type": "lobby_state",
+  "payload": {
+    "joined_players": 3,
+    "ready_players": 2,
+    "total_players": 4
+  }
+}
+```
+* The app also accepts aliases for compatibility: `joined`, `connected_players`, `ready_count`, `required_players`, `total`.
+
+#### Server → Client: Start Game (`game_start`)
+```json
+{
+  "type": "game_start",
+  "payload": {}
+}
+```
 
 ---
 

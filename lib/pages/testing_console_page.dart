@@ -127,6 +127,10 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
       case MessageType.purchaseResponse:
       case MessageType.cardDecisionPrompt:
       case MessageType.cardDecisionResponse:
+      case MessageType.joinLobby:
+      case MessageType.playerReady:
+      case MessageType.lobbyState:
+      case MessageType.gameStart:
         payload = {};
         break;
     }
@@ -242,6 +246,10 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
       case MessageType.purchaseResponse:
       case MessageType.cardDecisionPrompt:
       case MessageType.cardDecisionResponse:
+      case MessageType.joinLobby:
+      case MessageType.playerReady:
+      case MessageType.lobbyState:
+      case MessageType.gameStart:
         return const Text("Unknown payload");
     }
   }

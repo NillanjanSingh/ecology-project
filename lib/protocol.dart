@@ -18,6 +18,10 @@ enum MessageType {
   purchaseResponse, // App responds buy/skip
   cardDecisionPrompt, // ESP32 asks for A/B policy/event choice
   cardDecisionResponse, // App sends chosen option
+  joinLobby, // App joins pre-game lobby
+  playerReady, // App marks itself ready in lobby
+  lobbyState, // ESP32 lobby occupancy/readiness update
+  gameStart, // ESP32 signals game start
   unknown,
 }
 
@@ -41,6 +45,10 @@ class ProtocolMessage {
     'purchase_response': MessageType.purchaseResponse,
     'card_decision_prompt': MessageType.cardDecisionPrompt,
     'card_decision_response': MessageType.cardDecisionResponse,
+    'join_lobby': MessageType.joinLobby,
+    'player_ready': MessageType.playerReady,
+    'lobby_state': MessageType.lobbyState,
+    'game_start': MessageType.gameStart,
   };
 
   static const Map<MessageType, String> _typeToString = {
@@ -53,6 +61,10 @@ class ProtocolMessage {
     MessageType.purchaseResponse: 'purchase_response',
     MessageType.cardDecisionPrompt: 'card_decision_prompt',
     MessageType.cardDecisionResponse: 'card_decision_response',
+    MessageType.joinLobby: 'join_lobby',
+    MessageType.playerReady: 'player_ready',
+    MessageType.lobbyState: 'lobby_state',
+    MessageType.gameStart: 'game_start',
     MessageType.unknown: 'unknown',
   };
 
