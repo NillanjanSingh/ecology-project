@@ -141,7 +141,9 @@ class _GamePageState extends State<GamePage> {
                   ],
                 ),
               ),
-              if (gs.isPromptingScan) _buildScanOverlay(gs),
+              if (gs.isEliminated)
+                Builder(builder: (ctx) => _buildEliminatedOverlay(ctx, gs)),
+              if (gs.isPromptingScan && !gs.isEliminated) _buildScanOverlay(gs),
             ],
           ),
           // ─── Connection Status Bar ───
@@ -186,6 +188,62 @@ class _GamePageState extends State<GamePage> {
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Elimination Overlay
+  // ─────────────────────────────────────────────
+
+  Widget _buildEliminatedOverlay(BuildContext context, GameStateProvider gs) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.9),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 80,
+                color: Colors.redAccent.shade200,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'CITY ELIMINATED',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                  color: Colors.redAccent.shade200,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Your metrics fell below the critical threshold.\nYou are now a spectator.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              OutlinedButton.icon(
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+                icon: const Icon(Icons.people_alt_rounded),
+                label: const Text('View Remaining Factions'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
               ),
             ],
