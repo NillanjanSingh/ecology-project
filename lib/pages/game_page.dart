@@ -113,6 +113,8 @@ class _GamePageState extends State<GamePage> {
               children: [
                 // ─── Header ───
                 _buildHeader(faction, gs.bankBalance, gs.currentLap),
+                // ─── Turn Indicator ───
+                _buildTurnIndicator(gs),
                 // ─── Ascension Progress ───
                 _buildProgressBar(progress, metrics.totalScore),
                 // ─── Body ───
@@ -235,6 +237,44 @@ class _GamePageState extends State<GamePage> {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Turn Indicator
+  // ─────────────────────────────────────────────
+
+  Widget _buildTurnIndicator(GameStateProvider gs) {
+    if (gs.currentTurnFaction == null) return const SizedBox.shrink();
+
+    final isMyTurn = gs.currentTurnFaction == gs.faction;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      color: isMyTurn ? gs.faction.color.withValues(alpha: 0.8) : Colors.black45,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isMyTurn ? Icons.play_arrow_rounded : Icons.hourglass_empty_rounded,
+            color: isMyTurn ? Colors.white : gs.currentTurnFaction!.color,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isMyTurn 
+                ? "IT's YOUR TURN! Spin the encoder." 
+                : "Waiting for ${gs.currentTurnFaction!.displayName}...",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+              color: isMyTurn ? Colors.white : gs.currentTurnFaction!.color,
             ),
           ),
         ],

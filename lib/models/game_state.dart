@@ -51,6 +51,38 @@ extension FactionTypeExtension on FactionType {
   }
 }
 
+class PlayerData {
+  final FactionType faction;
+  final bool isEliminated;
+  final int bankBalance;
+  final PlayerMetrics metrics;
+
+  PlayerData({
+    required this.faction,
+    required this.isEliminated,
+    required this.bankBalance,
+    required this.metrics,
+  });
+
+  factory PlayerData.fromMap(Map<String, dynamic> map, FactionType defaultFaction) {
+    return PlayerData(
+      faction: _parseFactionStatic(map['faction']) ?? defaultFaction,
+      isEliminated: map['is_eliminated'] == true,
+      bankBalance: map['bank_balance'] ?? 0,
+      metrics: PlayerMetrics.fromMap(map['metrics'] ?? {}),
+    );
+  }
+
+  static FactionType? _parseFactionStatic(dynamic value) {
+    final s = value?.toString().toLowerCase() ?? '';
+    if (s.contains('natural')) return FactionType.naturalResources;
+    if (s.contains('software') || s.contains('tech')) return FactionType.software;
+    if (s.contains('industrial')) return FactionType.industrial;
+    if (s.contains('financial') || s.contains('finance') || s.contains('cultural')) return FactionType.financial; // map cultural to financial for now if needed
+    return null;
+  }
+}
+
 /// Holds the four core metric values for a player.
 class PlayerMetrics {
   final double sustainability;
@@ -253,8 +285,20 @@ class GameStateProvider extends ChangeNotifier {
   int _currentLap = 1;
   int get currentLap => _currentLap;
 
+  FactionType? _currentTurnFaction;
+  FactionType? get currentTurnFaction => _currentTurnFaction;
+
   String _gamePhase = 'waiting'; // waiting, playing, ended
   String get gamePhase => _gamePhase;
+
+  // --- Players Data ---
+  bool _isEliminated = false;
+  bool get isEliminated => _isEliminated;
+
+  List<PlayerData> _allPlayers = [];
+  List<PlayerData> get allPlayers => List.unmodifiable(_allPlayers);
+  
+  List<PlayerData> get opponents => _allPlayers.where((p) => p.faction != _faction).toList();
 
   // --- Pending Prompts (for modals) ---
   PurchasePrompt? _pendingPurchase;
@@ -286,14 +330,23 @@ class GameStateProvider extends ChangeNotifier {
       case MessageType.fullSync:
         _handleSyncState(msg.payload);
         break;
+      case MessageType.gameState:
+        _handleGameState(msg.payload);
+        break;
+      case MessageType.turnUpdate:
+        _handleTurnUpdate(msg.payload);
+        break;
+      case MessageType.moveResult:
+        _handleMoveResult(msg.payload);
+        break;
+      case MessageType.cardResolved:
+        _handleCardResolved(msg.payload);
+        break;
       case MessageType.promptPurchase:
         _handlePurchasePrompt(msg.payload);
         break;
       case MessageType.promptCardChoice:
         _handleCardDecisionPrompt(msg.payload);
-        break;
-      case MessageType.gameState:
-        _handleGameState(msg.payload);
         break;
       case MessageType.rfid:
         _addLog('RFID scanned: ${msg.payload['uid']}', severity: 'info');
@@ -317,30 +370,62 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   void _handleSyncState(Map<String, dynamic> payload) {
-    _metrics = PlayerMetrics.fromMap(payload['metrics'] ?? {});
-    _bankBalance = payload['bank_balance'] ?? _bankBalance;
-    _currentLap = payload['current_lap'] ?? _currentLap;
-
-    if (payload['faction'] != null) {
-      _faction = _parseFaction(payload['faction']);
+    if (payload['my_faction'] != null) {
+      _faction = _parseFaction(payload['my_faction']);
     }
-
-    if (payload['active_cards'] != null) {
-      _activeCards = (payload['active_cards'] as List)
-          .map((c) => ActiveCard.fromMap(c as Map<String, dynamic>))
-          .toList();
+    if (payload['current_turn_faction'] != null) {
+      _currentTurnFaction = _parseFaction(payload['current_turn_faction']);
     }
-
-    _addLog('State synced — Lap $_currentLap', severity: 'success');
-    notifyListeners();
+    if (payload['game_state'] != null) {
+      _handleGameState(payload['game_state'] as Map<String, dynamic>);
+    }
+    
+    _addLog('Full state synced.', severity: 'success');
   }
 
   void _handleGameState(Map<String, dynamic> payload) {
-    _gamePhase = payload['status']?.toString() ?? _gamePhase;
-    if (payload['faction'] != null) {
-      _faction = _parseFaction(payload['faction']);
+    _currentLap = payload['lap'] ?? _currentLap;
+    _gamePhase = payload['game_phase'] ?? payload['status']?.toString() ?? _gamePhase;
+    
+    final playersList = payload['players'] as List<dynamic>?;
+    if (playersList != null) {
+      _allPlayers = playersList.map((p) => PlayerData.fromMap(p as Map<String, dynamic>, FactionType.naturalResources)).toList();
+      
+      // Update my own metrics from the allPlayers list
+      try {
+        final myData = _allPlayers.firstWhere((p) => p.faction == _faction);
+        _metrics = myData.metrics;
+        _bankBalance = myData.bankBalance;
+        _isEliminated = myData.isEliminated;
+      } catch (e) {
+        // I might not be in the list yet
+      }
     }
-    _addLog('Game state: $_gamePhase', severity: 'info');
+    
+    _addLog('Game state updated: $_gamePhase', severity: 'info');
+    notifyListeners();
+  }
+
+  void _handleTurnUpdate(Map<String, dynamic> payload) {
+    if (payload['active_faction'] != null) {
+      _currentTurnFaction = _parseFaction(payload['active_faction']);
+      _addLog('Turn updated to ${_currentTurnFaction?.displayName ?? "Unknown"}', severity: 'info');
+      notifyListeners();
+    }
+  }
+
+  void _handleMoveResult(Map<String, dynamic> payload) {
+    final f = _parseFaction(payload['faction']);
+    final spaces = payload['spaces_moved'];
+    _addLog('${f.displayName} moved $spaces spaces', severity: 'info');
+    notifyListeners();
+  }
+
+  void _handleCardResolved(Map<String, dynamic> payload) {
+    final title = payload['card_title'];
+    final target = _parseFaction(payload['target_faction']);
+    final impact = payload['impact_level'];
+    _addLog('$title ($impact impact) resolved on ${target.displayName}', severity: 'warning');
     notifyListeners();
   }
 
