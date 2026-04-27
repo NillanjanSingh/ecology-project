@@ -122,11 +122,23 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
         };
         break;
       case MessageType.unknown:
-      case MessageType.syncState:
-      case MessageType.purchasePrompt:
-      case MessageType.purchaseResponse:
-      case MessageType.cardDecisionPrompt:
-      case MessageType.cardDecisionResponse:
+      case MessageType.reconnect:
+      case MessageType.actionTransferFunds:
+      case MessageType.fullSync:
+      case MessageType.turnUpdate:
+      case MessageType.moveResult:
+      case MessageType.promptScan:
+      case MessageType.promptPurchase:
+      case MessageType.actionPurchase:
+      case MessageType.promptCardChoice:
+      case MessageType.actionCardChoice:
+      case MessageType.errorMsg:
+      case MessageType.cardResolved:
+      case MessageType.timeoutWarning:
+      case MessageType.joinLobby:
+      case MessageType.setReady:
+      case MessageType.lobbyState:
+      case MessageType.gameStart:
         payload = {};
         break;
     }
@@ -237,11 +249,23 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
           ],
         );
       case MessageType.unknown:
-      case MessageType.syncState:
-      case MessageType.purchasePrompt:
-      case MessageType.purchaseResponse:
-      case MessageType.cardDecisionPrompt:
-      case MessageType.cardDecisionResponse:
+      case MessageType.reconnect:
+      case MessageType.actionTransferFunds:
+      case MessageType.fullSync:
+      case MessageType.turnUpdate:
+      case MessageType.moveResult:
+      case MessageType.promptScan:
+      case MessageType.promptPurchase:
+      case MessageType.actionPurchase:
+      case MessageType.promptCardChoice:
+      case MessageType.actionCardChoice:
+      case MessageType.errorMsg:
+      case MessageType.cardResolved:
+      case MessageType.timeoutWarning:
+      case MessageType.joinLobby:
+      case MessageType.setReady:
+      case MessageType.lobbyState:
+      case MessageType.gameStart:
         return const Text("Unknown payload");
     }
   }

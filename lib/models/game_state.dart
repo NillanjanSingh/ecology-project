@@ -283,13 +283,13 @@ class GameStateProvider extends ChangeNotifier {
   /// When the protocol changes, update the cases here.
   void _handleMessage(ProtocolMessage msg) {
     switch (msg.type) {
-      case MessageType.syncState:
+      case MessageType.fullSync:
         _handleSyncState(msg.payload);
         break;
-      case MessageType.purchasePrompt:
+      case MessageType.promptPurchase:
         _handlePurchasePrompt(msg.payload);
         break;
-      case MessageType.cardDecisionPrompt:
+      case MessageType.promptCardChoice:
         _handleCardDecisionPrompt(msg.payload);
         break;
       case MessageType.gameState:
@@ -303,6 +303,12 @@ class GameStateProvider extends ChangeNotifier {
           'Encoder: direction=${msg.payload['direction']}, value=${msg.payload['value']}',
           severity: 'info',
         );
+        break;
+      case MessageType.lobbyState:
+      case MessageType.joinLobby:
+      case MessageType.setReady:
+      case MessageType.gameStart:
+        // Lobby events are handled by the lobby screen; ignore in in-game state.
         break;
       default:
         _addLog('Unknown message received', severity: 'warning');
@@ -363,7 +369,7 @@ class GameStateProvider extends ChangeNotifier {
   /// Respond to a purchase prompt.
   void sendPurchaseResponse(bool buy) {
     final msg = ProtocolMessage(
-      type: MessageType.purchaseResponse,
+      type: MessageType.actionPurchase,
       payload: {'action': buy ? 'buy' : 'skip'},
     );
     network.sendMessage(msg.toJsonString());
@@ -375,7 +381,7 @@ class GameStateProvider extends ChangeNotifier {
   /// Respond to a card decision prompt.
   void sendCardDecisionResponse(String choice) {
     final msg = ProtocolMessage(
-      type: MessageType.cardDecisionResponse,
+      type: MessageType.actionCardChoice,
       payload: {'card_id': _pendingDecision?.cardId ?? '', 'choice': choice},
     );
     network.sendMessage(msg.toJsonString());
@@ -509,3 +515,4 @@ class GameStateProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+
