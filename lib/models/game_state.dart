@@ -274,7 +274,7 @@ class GameStateProvider extends ChangeNotifier {
   int get bankBalance => _bankBalance;
 
   // --- Active Cards ---
-  List<ActiveCard> _activeCards = [];
+  final List<ActiveCard> _activeCards = [];
   List<ActiveCard> get activeCards => List.unmodifiable(_activeCards);
 
   // --- Game Log ---
