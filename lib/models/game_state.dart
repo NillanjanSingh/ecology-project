@@ -307,6 +307,11 @@ class GameStateProvider extends ChangeNotifier {
   CardDecisionPrompt? _pendingDecision;
   CardDecisionPrompt? get pendingDecision => _pendingDecision;
 
+  bool _isPromptingScan = false;
+  bool get isPromptingScan => _isPromptingScan;
+  String? _scanPromptMessage;
+  String? get scanPromptMessage => _scanPromptMessage;
+
   // Ascension target
   static const int ascensionTarget = 4000;
 
@@ -343,10 +348,23 @@ class GameStateProvider extends ChangeNotifier {
         _handleCardResolved(msg.payload);
         break;
       case MessageType.promptPurchase:
+        _isPromptingScan = false;
         _handlePurchasePrompt(msg.payload);
         break;
       case MessageType.promptCardChoice:
+        _isPromptingScan = false;
         _handleCardDecisionPrompt(msg.payload);
+        break;
+      case MessageType.promptScan:
+        _isPromptingScan = true;
+        _scanPromptMessage = msg.payload['message']?.toString();
+        _addLog(_scanPromptMessage ?? 'Please scan a card...', severity: 'warning');
+        notifyListeners();
+        break;
+      case MessageType.timeoutWarning:
+        _isPromptingScan = false;
+        _addLog(msg.payload['message']?.toString() ?? 'Action timed out', severity: 'warning');
+        notifyListeners();
         break;
       case MessageType.rfid:
         _addLog('RFID scanned: ${msg.payload['uid']}', severity: 'info');
@@ -422,6 +440,7 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   void _handleCardResolved(Map<String, dynamic> payload) {
+    _isPromptingScan = false;
     final title = payload['card_title'];
     final target = _parseFaction(payload['target_faction']);
     final impact = payload['impact_level'];
