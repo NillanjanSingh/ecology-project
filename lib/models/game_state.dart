@@ -515,4 +515,3 @@ class GameStateProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

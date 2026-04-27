@@ -16,7 +16,7 @@ enum MessageType {
   actionPurchase,
   actionCardChoice,
   actionTransferFunds,
-  
+
   // Server Truths (ESP32 -> App)
   lobbyState,
   gameStart,
@@ -30,7 +30,7 @@ enum MessageType {
   cardResolved,
   timeoutWarning,
   gameState,
-  
+
   // Hardware events / Testing
   rfid,
   encoder,
@@ -71,7 +71,7 @@ class ProtocolMessage {
     'rfid': MessageType.rfid,
     'encoder': MessageType.encoder,
     'card_action': MessageType.cardAction,
-    
+
     // Legacy mappings mapped to new types just in case
     'sync_state': MessageType.fullSync,
     'purchase_response': MessageType.actionPurchase,

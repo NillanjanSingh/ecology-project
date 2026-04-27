@@ -138,7 +138,8 @@ class _LobbyPageState extends State<LobbyPage> {
       return;
     }
 
-    if (message.type == MessageType.gameStart) {
+    if (message.type == MessageType.gameStart ||
+        message.type == MessageType.fullSync) {
       _goToGame();
       return;
     }
@@ -272,7 +273,9 @@ class _LobbyPageState extends State<LobbyPage> {
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: (_isJoining || _hasJoinedLobby) ? null : _reconnectGame,
+              onPressed: (_isJoining || _hasJoinedLobby)
+                  ? null
+                  : _reconnectGame,
               icon: const Icon(Icons.restore_rounded),
               label: const Text('Reconnect to Active Game'),
             ),
