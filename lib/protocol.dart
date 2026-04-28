@@ -34,7 +34,7 @@ enum MessageType {
   // Hardware events / Testing
   rfid,
   encoder,
-  cardAction, // legacy/testing
+  cardAction, // testing-only
   unknown,
 }
 
@@ -70,14 +70,6 @@ class ProtocolMessage {
     'rfid': MessageType.rfid,
     'encoder': MessageType.encoder,
     'card_action': MessageType.cardAction,
-
-    // Legacy mappings mapped to new types just in case
-    'sync_state': MessageType.fullSync,
-    'purchase_prompt': MessageType.promptPurchase,
-    'purchase_response': MessageType.actionPurchase,
-    'card_decision_prompt': MessageType.promptCardChoice,
-    'card_decision_response': MessageType.actionCardChoice,
-    'player_ready': MessageType.setReady,
   };
 
   static const Map<MessageType, String> _typeToString = {

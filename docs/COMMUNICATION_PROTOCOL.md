@@ -1,6 +1,7 @@
 # Exact Communication Protocol (End-to-End)
 
 This document defines the exact JSON payloads for the robust architecture described in `GAME_ARCHITECTURE.md`. 
+For implementation alignment rules (validation, reconnect prompt restoration, strict type support), see `ARCHITECTURE_ALIGNMENT.md`.
 
 ## Overview
 * **Transport:** WebSockets (WS)

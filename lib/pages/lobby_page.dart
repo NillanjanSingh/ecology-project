@@ -144,15 +144,6 @@ class _LobbyPageState extends State<LobbyPage> {
       _goToGame();
       return;
     }
-
-    if (message.type == MessageType.gameState) {
-      final status = message.payload['status']?.toString().toLowerCase();
-      if (status == 'playing' ||
-          status == 'in_progress' ||
-          status == 'started') {
-        _goToGame();
-      }
-    }
   }
 
   void _applyLobbyState(Map<String, dynamic> payload) {

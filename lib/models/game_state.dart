@@ -342,25 +342,38 @@ class GameStateProvider extends ChangeNotifier {
   void _handleMessage(ProtocolMessage msg) {
     switch (msg.type) {
       case MessageType.fullSync:
+        if (!_requireMapFields(msg.payload, const ['game_state'])) return;
         _handleSyncState(msg.payload);
         break;
       case MessageType.gameState:
+        if (!_requireMapFields(msg.payload, const ['players'])) return;
         _handleGameState(msg.payload);
         break;
       case MessageType.turnUpdate:
+        if (!_requireMapFields(msg.payload, const ['active_faction'])) return;
         _handleTurnUpdate(msg.payload);
         break;
       case MessageType.moveResult:
+        if (!_requireMapFields(msg.payload, const ['faction', 'spaces_moved'])) {
+          return;
+        }
         _handleMoveResult(msg.payload);
         break;
       case MessageType.cardResolved:
+        if (!_requireMapFields(msg.payload, const ['card_title', 'target_faction'])) {
+          return;
+        }
         _handleCardResolved(msg.payload);
         break;
       case MessageType.promptPurchase:
+        if (!_requireMapFields(msg.payload, const ['name', 'cost'])) return;
         _isPromptingScan = false;
         _handlePurchasePrompt(msg.payload);
         break;
       case MessageType.promptCardChoice:
+        if (!_requireMapFields(msg.payload, const ['card_title', 'choice_a', 'choice_b'])) {
+          return;
+        }
         _isPromptingScan = false;
         _handleCardDecisionPrompt(msg.payload);
         break;
@@ -412,6 +425,7 @@ class GameStateProvider extends ChangeNotifier {
     if (payload['game_state'] != null) {
       _handleGameState(payload['game_state'] as Map<String, dynamic>);
     }
+    _restorePendingPrompt(payload['pending_prompt']);
 
     _addLog('Full state synced.', severity: 'success');
   }
@@ -478,6 +492,7 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   void _handlePurchasePrompt(Map<String, dynamic> payload) {
+    _pendingDecision = null;
     _pendingPurchase = PurchasePrompt.fromMap(payload);
     _addLog(
       'Purchase available: ${_pendingPurchase!.infrastructureName}',
@@ -487,6 +502,7 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   void _handleCardDecisionPrompt(Map<String, dynamic> payload) {
+    _pendingPurchase = null;
     _pendingDecision = CardDecisionPrompt.fromMap(payload);
     _addLog(
       'Decision required: ${_pendingDecision!.cardTitle}',
@@ -523,11 +539,24 @@ class GameStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  String factionToProtocolValue(FactionType faction) {
+    switch (faction) {
+      case FactionType.naturalResources:
+        return 'Natural';
+      case FactionType.software:
+        return 'Tech';
+      case FactionType.industrial:
+        return 'Industrial';
+      case FactionType.financial:
+        return 'Cultural';
+    }
+  }
+
   // -------------------------------------------------------
   // Simulation helpers (for prototyping / testing without ESP32)
   // -------------------------------------------------------
 
-  /// Injects a fake sync_state message for UI testing.
+  /// Injects a fake full_sync message for UI testing.
   void simulateSyncState({
     double sustainability = 650,
     double smart = 500,
@@ -537,39 +566,39 @@ class GameStateProvider extends ChangeNotifier {
     int lap = 3,
   }) {
     final payload = {
-      'type': 'sync_state',
+      'type': 'full_sync',
       'payload': {
-        'metrics': {
-          'sustainability': sustainability,
-          'smart': smart,
-          'livability': livability,
-          'economy': economy,
+        'my_faction': 'Natural',
+        'current_turn_faction': 'Tech',
+        'game_state': {
+          'lap': lap,
+          'game_phase': 'in_progress',
+          'players': [
+            {
+              'faction': 'Natural',
+              'is_eliminated': false,
+              'bank_balance': bankBalance,
+              'metrics': {
+                'sustainability': sustainability,
+                'smart': smart,
+                'livability': livability,
+                'economy': economy,
+              },
+            },
+            {
+              'faction': 'Tech',
+              'is_eliminated': false,
+              'bank_balance': 1200,
+              'metrics': const {
+                'sustainability': 500.0,
+                'smart': 650.0,
+                'livability': 520.0,
+                'economy': 600.0,
+              },
+            },
+          ],
         },
-        'bank_balance': bankBalance,
-        'current_lap': lap,
-        'active_cards': [
-          {
-            'id': 'disaster_01',
-            'name': 'Earthquake',
-            'type': 'disaster',
-            'description': 'Infrastructure damage -15% Economy',
-            'remaining_laps': 2,
-          },
-          {
-            'id': 'policy_01',
-            'name': 'Green Initiative',
-            'type': 'policy',
-            'description': '+10% Sustainability per lap',
-            'remaining_laps': 4,
-          },
-          {
-            'id': 'event_01',
-            'name': 'Tech Summit',
-            'type': 'event',
-            'description': 'Temporary +5% Smart boost',
-            'remaining_laps': 1,
-          },
-        ],
+        'pending_prompt': null,
       },
     };
     _onRawMessage(jsonEncode(payload));
@@ -578,7 +607,7 @@ class GameStateProvider extends ChangeNotifier {
   /// Injects a fake purchase prompt.
   void simulatePurchasePrompt() {
     final payload = {
-      'type': 'purchase_prompt',
+      'type': 'prompt_purchase',
       'payload': {
         'name': 'Solar Farm',
         'description':
@@ -593,7 +622,7 @@ class GameStateProvider extends ChangeNotifier {
   /// Injects a fake card decision prompt.
   void simulateCardDecisionPrompt() {
     final payload = {
-      'type': 'card_decision_prompt',
+      'type': 'prompt_card_choice',
       'payload': {
         'card_id': 'policy_02',
         'card_title': 'Carbon Tax Regulation',
@@ -618,6 +647,46 @@ class GameStateProvider extends ChangeNotifier {
     _logEntries.insert(0, GameLogEntry(message: message, severity: severity));
     if (_logEntries.length > 100) _logEntries.removeLast();
     logger.i('[GameLog] $message');
+  }
+
+  bool _requireMapFields(Map<String, dynamic> payload, List<String> requiredKeys) {
+    for (final key in requiredKeys) {
+      if (!payload.containsKey(key)) {
+        _addLog('Malformed payload for message: missing "$key"', severity: 'error');
+        notifyListeners();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void _restorePendingPrompt(dynamic pendingPrompt) {
+    _pendingPurchase = null;
+    _pendingDecision = null;
+    _isPromptingScan = false;
+    _scanPromptMessage = null;
+
+    if (pendingPrompt is! Map<String, dynamic>) return;
+    final restored = ProtocolMessage.fromJsonString(jsonEncode(pendingPrompt));
+
+    switch (restored.type) {
+      case MessageType.promptPurchase:
+        _handlePurchasePrompt(restored.payload);
+        break;
+      case MessageType.promptCardChoice:
+        _handleCardDecisionPrompt(restored.payload);
+        break;
+      case MessageType.promptScan:
+        _isPromptingScan = true;
+        _scanPromptMessage = restored.payload['message']?.toString();
+        _addLog(_scanPromptMessage ?? 'Please scan a card...', severity: 'warning');
+        notifyListeners();
+        break;
+      default:
+        _addLog('Ignored unsupported pending prompt from full_sync', severity: 'warning');
+        notifyListeners();
+        break;
+    }
   }
 
   FactionType _parseFaction(dynamic value) {

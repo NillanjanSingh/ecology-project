@@ -50,7 +50,7 @@ class NetworkManager {
 
       onStatusUpdate?.call("Connecting to $ipAddress...");
 
-      channel = WebSocketChannel.connect(Uri.parse('ws://$ipAddress:81'));
+      channel = WebSocketChannel.connect(Uri.parse('ws://$ipAddress:81/'));
 
       channel!.stream.listen(
         (message) {

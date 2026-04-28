@@ -16,7 +16,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
 
   void _sendTrade(GameStateProvider gs) {
     if (_selectedOpponent == null) return;
-    
+    final selected = _selectedOpponent!;
     final amount = int.tryParse(_amountController.text) ?? 0;
     if (amount <= 0 || amount > gs.bankBalance) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -28,7 +28,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
     final msg = ProtocolMessage(
       type: MessageType.actionTransferFunds,
       payload: {
-        'target_faction': _selectedOpponent!.faction.name,
+        'target_faction': gs.factionToProtocolValue(selected.faction),
         'amount': amount,
       },
     );
@@ -40,7 +40,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
     });
     
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Transferred ¤$amount to ${_selectedOpponent?.faction.displayName}')),
+      SnackBar(content: Text('Transferred ¤$amount to ${selected.faction.displayName}')),
     );
     
     Navigator.of(context).pop(); // Close drawer
