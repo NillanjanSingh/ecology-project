@@ -35,14 +35,14 @@ Only the documented types are part of production contract.
 - `timeout_warning`
 - `game_state`
 
-Legacy aliases (`sync_state`, `purchase_prompt`, etc.) are not part of production protocol.
+Unsupported or undocumented message types must be rejected as `unknown`.
 
 ## 3. Faction Wire Values
 On-wire faction names must match protocol exactly:
 - `Natural`
-- `Tech`
-- `Industrial`
-- `Cultural`
+- `Manufacturing`
+- `Tourism`
+- `Technological`
 
 App-internal enums may differ, but serialization/deserialization must map to these values.
 
@@ -69,6 +69,5 @@ When receiving `full_sync`, app must:
 ## 7. Testing Requirements
 Automated tests must verify:
 - Type mapping for all documented message types.
-- Unknown handling for legacy/non-contract types.
+- Unknown handling for unsupported/non-contract types.
 - Correct encoding of all outgoing intent types.
-

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Modal dialog shown when ESP32 sends a purchase_prompt.
+/// Modal dialog shown when ESP32 sends a prompt_purchase message.
 class PurchaseDialog extends StatelessWidget {
   final String infrastructureName;
   final String description;

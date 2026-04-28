@@ -107,8 +107,8 @@ Broadcasted whenever someone joins or changes ready status.
     "ready_count": 2,
     "players": [
       { "faction": "Natural", "is_ready": true },
-      { "faction": "Tech", "is_ready": true },
-      { "faction": "Industrial", "is_ready": false }
+      { "faction": "Technological", "is_ready": true },
+      { "faction": "Manufacturing", "is_ready": false }
     ]
   }
 }
@@ -129,7 +129,7 @@ Broadcasted when the turn passes to a new player.
 {
   "type": "turn_update",
   "payload": {
-    "active_faction": "Tech"
+    "active_faction": "Technological"
   }
 }
 ```
@@ -140,7 +140,7 @@ Broadcasted after the ESP32 reads the rotary encoder and resolves physical movem
 {
   "type": "move_result",
   "payload": {
-    "faction": "Tech",
+    "faction": "Technological",
     "spaces_moved": 4,
     "landed_on_tile_type": "infrastructure" // e.g., "policy", "disaster", "infrastructure"
   }
@@ -198,7 +198,7 @@ Broadcasted when a forced card (like a Disaster) is scanned. The ESP32 calculate
   "type": "card_resolved",
   "payload": {
     "card_title": "Flood",
-    "target_faction": "Industrial",
+    "target_faction": "Manufacturing",
     "impact_level": "High",
     "effects_applied": {
       "liveability": -20,
@@ -225,7 +225,7 @@ Broadcasted if the 60-second timer expires while waiting for a player's choice.
 {
   "type": "timeout_warning",
   "payload": {
-    "message": "Tech City took too long. Auto-skipping their action."
+    "message": "Technological City took too long. Auto-skipping their action."
   }
 }
 ```
@@ -256,6 +256,8 @@ The master state payload. Broadcasted after ANY mathematical change (metrics, po
 }
 ```
 
+Valid faction values in all payloads are `Natural`, `Manufacturing`, `Tourism`, and `Technological`.
+
 ### `full_sync`
 Sent ONLY in response to a `reconnect` message from a crashed app.
 ```json
@@ -263,7 +265,7 @@ Sent ONLY in response to a `reconnect` message from a crashed app.
   "type": "full_sync",
   "payload": {
     "my_faction": "Natural",
-    "current_turn_faction": "Tech",
+    "current_turn_faction": "Technological",
     "game_state": {
       // (Exact same object as the standard `game_state` payload above)
     },

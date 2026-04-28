@@ -39,7 +39,9 @@ class _TestingConsolePageState extends State<TestingConsolePage> {
   final _valueController = TextEditingController(text: "15");
   final _statusController = TextEditingController(text: "in_progress");
   final _activeCityController = TextEditingController(text: "Natural");
-  final _eliminatedCitiesController = TextEditingController(text: "Tech");
+  final _eliminatedCitiesController = TextEditingController(
+    text: "Technological",
+  );
   final _actionController = TextEditingController(text: "implement_policy");
   final _policyIdController = TextEditingController(text: "air_policy_A");
   final _costController = TextEditingController(text: "50");

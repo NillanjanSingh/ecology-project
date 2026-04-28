@@ -7,46 +7,46 @@ import 'dart:async';
 
 // --- Data Enums & Classes ---
 
-/// The four factions/cities a player can control.
-enum FactionType { naturalResources, software, industrial, financial }
+/// The four city types a player can control.
+enum FactionType { natural, manufacturing, tourism, technological }
 
 extension FactionTypeExtension on FactionType {
   String get displayName {
     switch (this) {
-      case FactionType.naturalResources:
-        return 'Natural Resources';
-      case FactionType.software:
-        return 'Software';
-      case FactionType.industrial:
-        return 'Industrial';
-      case FactionType.financial:
-        return 'Financial';
+      case FactionType.natural:
+        return 'Natural';
+      case FactionType.manufacturing:
+        return 'Manufacturing';
+      case FactionType.tourism:
+        return 'Tourism';
+      case FactionType.technological:
+        return 'Technological';
     }
   }
 
   Color get color {
     switch (this) {
-      case FactionType.naturalResources:
+      case FactionType.natural:
         return const Color(0xFF2E7D32); // Forest Green
-      case FactionType.software:
+      case FactionType.manufacturing:
+        return const Color(0xFFE65100); // Manufacturing Orange
+      case FactionType.tourism:
+        return const Color(0xFF00897B); // Tourism Teal
+      case FactionType.technological:
         return const Color(0xFF1565C0); // Tech Blue
-      case FactionType.industrial:
-        return const Color(0xFFE65100); // Industrial Orange
-      case FactionType.financial:
-        return const Color(0xFF6A1B9A); // Finance Purple
     }
   }
 
   IconData get icon {
     switch (this) {
-      case FactionType.naturalResources:
+      case FactionType.natural:
         return Icons.park;
-      case FactionType.software:
-        return Icons.code;
-      case FactionType.industrial:
+      case FactionType.manufacturing:
         return Icons.factory;
-      case FactionType.financial:
-        return Icons.account_balance;
+      case FactionType.tourism:
+        return Icons.flight_takeoff;
+      case FactionType.technological:
+        return Icons.memory;
     }
   }
 }
@@ -78,15 +78,12 @@ class PlayerData {
 
   static FactionType? _parseFactionStatic(dynamic value) {
     final s = value?.toString().toLowerCase() ?? '';
-    if (s.contains('natural')) return FactionType.naturalResources;
-    if (s.contains('software') || s.contains('tech'))
-      return FactionType.software;
-    if (s.contains('industrial')) return FactionType.industrial;
-    if (s.contains('financial') ||
-        s.contains('finance') ||
-        s.contains('cultural'))
-      return FactionType
-          .financial; // map cultural to financial for now if needed
+    if (s.contains('natural')) return FactionType.natural;
+    if (s.contains('manufact')) return FactionType.manufacturing;
+    if (s.contains('tour')) return FactionType.tourism;
+    if (s.contains('technological')) {
+      return FactionType.technological;
+    }
     return null;
   }
 }
@@ -270,7 +267,7 @@ class GameStateProvider extends ChangeNotifier {
   StreamSubscription<String>? _subscription;
 
   // --- Player Identity ---
-  FactionType _faction = FactionType.naturalResources;
+  FactionType _faction = FactionType.natural;
   FactionType get faction => _faction;
 
   // --- Metrics ---
@@ -354,13 +351,19 @@ class GameStateProvider extends ChangeNotifier {
         _handleTurnUpdate(msg.payload);
         break;
       case MessageType.moveResult:
-        if (!_requireMapFields(msg.payload, const ['faction', 'spaces_moved'])) {
+        if (!_requireMapFields(msg.payload, const [
+          'faction',
+          'spaces_moved',
+        ])) {
           return;
         }
         _handleMoveResult(msg.payload);
         break;
       case MessageType.cardResolved:
-        if (!_requireMapFields(msg.payload, const ['card_title', 'target_faction'])) {
+        if (!_requireMapFields(msg.payload, const [
+          'card_title',
+          'target_faction',
+        ])) {
           return;
         }
         _handleCardResolved(msg.payload);
@@ -371,7 +374,11 @@ class GameStateProvider extends ChangeNotifier {
         _handlePurchasePrompt(msg.payload);
         break;
       case MessageType.promptCardChoice:
-        if (!_requireMapFields(msg.payload, const ['card_title', 'choice_a', 'choice_b'])) {
+        if (!_requireMapFields(msg.payload, const [
+          'card_title',
+          'choice_a',
+          'choice_b',
+        ])) {
           return;
         }
         _isPromptingScan = false;
@@ -441,7 +448,7 @@ class GameStateProvider extends ChangeNotifier {
           .map(
             (p) => PlayerData.fromMap(
               p as Map<String, dynamic>,
-              FactionType.naturalResources,
+              FactionType.natural,
             ),
           )
           .toList();
@@ -541,14 +548,14 @@ class GameStateProvider extends ChangeNotifier {
 
   String factionToProtocolValue(FactionType faction) {
     switch (faction) {
-      case FactionType.naturalResources:
+      case FactionType.natural:
         return 'Natural';
-      case FactionType.software:
-        return 'Tech';
-      case FactionType.industrial:
-        return 'Industrial';
-      case FactionType.financial:
-        return 'Cultural';
+      case FactionType.manufacturing:
+        return 'Manufacturing';
+      case FactionType.tourism:
+        return 'Tourism';
+      case FactionType.technological:
+        return 'Technological';
     }
   }
 
@@ -569,7 +576,7 @@ class GameStateProvider extends ChangeNotifier {
       'type': 'full_sync',
       'payload': {
         'my_faction': 'Natural',
-        'current_turn_faction': 'Tech',
+        'current_turn_faction': 'Technological',
         'game_state': {
           'lap': lap,
           'game_phase': 'in_progress',
@@ -586,7 +593,7 @@ class GameStateProvider extends ChangeNotifier {
               },
             },
             {
-              'faction': 'Tech',
+              'faction': 'Technological',
               'is_eliminated': false,
               'bank_balance': 1200,
               'metrics': const {
@@ -649,10 +656,16 @@ class GameStateProvider extends ChangeNotifier {
     logger.i('[GameLog] $message');
   }
 
-  bool _requireMapFields(Map<String, dynamic> payload, List<String> requiredKeys) {
+  bool _requireMapFields(
+    Map<String, dynamic> payload,
+    List<String> requiredKeys,
+  ) {
     for (final key in requiredKeys) {
       if (!payload.containsKey(key)) {
-        _addLog('Malformed payload for message: missing "$key"', severity: 'error');
+        _addLog(
+          'Malformed payload for message: missing "$key"',
+          severity: 'error',
+        );
         notifyListeners();
         return false;
       }
@@ -679,11 +692,17 @@ class GameStateProvider extends ChangeNotifier {
       case MessageType.promptScan:
         _isPromptingScan = true;
         _scanPromptMessage = restored.payload['message']?.toString();
-        _addLog(_scanPromptMessage ?? 'Please scan a card...', severity: 'warning');
+        _addLog(
+          _scanPromptMessage ?? 'Please scan a card...',
+          severity: 'warning',
+        );
         notifyListeners();
         break;
       default:
-        _addLog('Ignored unsupported pending prompt from full_sync', severity: 'warning');
+        _addLog(
+          'Ignored unsupported pending prompt from full_sync',
+          severity: 'warning',
+        );
         notifyListeners();
         break;
     }
@@ -693,19 +712,19 @@ class GameStateProvider extends ChangeNotifier {
     final s = value.toString().toLowerCase();
 
     if (s.contains('natural')) {
-      return FactionType.naturalResources;
+      return FactionType.natural;
     }
 
-    if (s.contains('software') || s.contains('tech')) {
-      return FactionType.software;
+    if (s.contains('manufact')) {
+      return FactionType.manufacturing;
     }
 
-    if (s.contains('industrial')) {
-      return FactionType.industrial;
+    if (s.contains('tour')) {
+      return FactionType.tourism;
     }
 
-    if (s.contains('financial') || s.contains('finance')) {
-      return FactionType.financial;
+    if (s.contains('technological')) {
+      return FactionType.technological;
     }
 
     return _faction; // Keep current if unrecognized

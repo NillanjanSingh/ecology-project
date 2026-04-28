@@ -8,7 +8,7 @@ This document outlines the robust, cheat-proof, and resilient architectural plan
 
 * **Authoritative Server (ESP32):** The ESP32 handles all mathematics, dice rolls, random number generation, card tracking, and timers. The Flutter app NEVER calculates outcomes or trusts client-side randomness.
 * **Stateless Clients (Flutter):** If an app crashes, the player must be able to restart it, send a `reconnect` message, and immediately resume playing exactly where they left off without breaking the game loop.
-* **Unique Device IDs:** Upon first connecting, the Flutter app generates a random UUID and saves it locally. It sends this ID to the ESP32. This allows the ESP32 to map a specific phone to a specific Faction (e.g., Device A is always Natural City, even if it disconnects and reconnects later).
+* **Unique Device IDs:** Upon first connecting, the Flutter app generates a random UUID and saves it locally. It sends this ID to the ESP32. This allows the ESP32 to map a specific phone to a specific city type (e.g., Device A is always Natural City, even if it disconnects and reconnects later).
 
 ---
 
@@ -18,8 +18,8 @@ This document outlines the robust, cheat-proof, and resilient architectural plan
 
 1. **Connection:** Player opens the app and connects to the WebSocket (`ws://gigachad-esp.local:81`).
 2. **Join Request:** App sends a `join_lobby` message containing its `device_id`.
-3. **Faction Assignment:** The ESP32 checks if this `device_id` is known. If new, it assigns an available Faction (Natural, Tech, Industrial, Cultural) and adds them to the lobby.
-4. **Lobby Broadcast:** ESP32 broadcasts `lobby_state` to all connected phones (e.g., *"3/4 Players Connected. Natural is Ready, Tech is Not Ready"*).
+3. **Faction Assignment:** The ESP32 checks if this `device_id` is known. If new, it assigns an available city type (Natural, Manufacturing, Tourism, Technological) and adds them to the lobby.
+4. **Lobby Broadcast:** ESP32 broadcasts `lobby_state` to all connected phones (e.g., *"3/4 Players Connected. Natural is Ready, Technological is Not Ready"*).
 5. **Ready Up:** Players tap "Ready" on their phones. The app sends `set_ready`.
 6. **Game Start:** Once the ESP32 registers 4 ready players, it initializes the baseline metrics, creates an empty `discard_pile` array for scanned cards, and broadcasts `game_start` followed by the initial `game_state`.
 
@@ -30,14 +30,14 @@ This document outlines the robust, cheat-proof, and resilient architectural plan
 **Goal:** A strict, linear sequence controlled entirely by the ESP32, immune to race conditions.
 
 ### Step A: Turn Initialization
-* The ESP32 increments the turn counter and determines the active Faction.
-* ESP32 broadcasts `turn_update` (e.g., *"It is Tech City's Turn"*).
-* Non-active apps show: *"Waiting for Tech City."* The active app shows: *"Spin the encoder on the board!"*
+* The ESP32 increments the turn counter and determines the active city.
+* ESP32 broadcasts `turn_update` (e.g., *"It is Technological City's Turn"*).
+* Non-active apps show: *"Waiting for Technological City."* The active app shows: *"Spin the encoder on the board!"*
 
 ### Step B: Physical Movement
 * The player physically spins the encoder. 
 * The ESP32 reads the hardware, calculates the steps, and moves the digital position of that player. 
-* ESP32 broadcasts `move_result` (e.g., *"Tech City moved 4 spaces and landed on an Infra Tile"*).
+* ESP32 broadcasts `move_result` (e.g., *"Technological City moved 4 spaces and landed on an Infra Tile"*).
 
 ### Step C: Tile Resolution (The Interaction Phase)
 The ESP32 looks at what tile the player landed on, enters a **"Pending State"**, and starts a **60-second hardware timer**.
@@ -70,7 +70,7 @@ The ESP32 looks at what tile the player landed on, enters a **"Pending State"**,
 * At any time, Player A can open the "Trade" tab and attempt to send 20 points to Player B.
 * Player A's app sends `action_transfer_funds` (Target: Player B, Amount: 20).
 * The ESP32 intercepts this. It verifies Player A has `>= 20` points. 
-* If valid, ESP32 deducts 20 from A, adds 20 to B, and broadcasts a fresh `game_state` with an attached notification: *"Tech City transferred 20 points to Natural City!"*
+* If valid, ESP32 deducts 20 from A, adds 20 to B, and broadcasts a fresh `game_state` with an attached notification: *"Technological City transferred 20 points to Natural City!"*
 * *Crucial Benefit:* Because the ESP32 holds the state, this prevents the "double-spend" exploit where a player tries to send money they don't have.
 
 ---
