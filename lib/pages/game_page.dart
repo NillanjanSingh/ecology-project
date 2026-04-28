@@ -6,6 +6,7 @@ import '../widgets/radar_chart_widget.dart';
 import '../widgets/status_log.dart';
 import '../widgets/modals/purchase_dialog.dart';
 import '../widgets/modals/card_decision_dialog.dart';
+import '../widgets/trade_drawer.dart';
 
 /// The Mayor's Terminal — main game dashboard.
 ///
@@ -108,32 +109,42 @@ class _GamePageState extends State<GamePage> {
 
         return Scaffold(
           backgroundColor: const Color(0xFF0A0E14),
-          body: SafeArea(
-            child: Column(
-              children: [
-                // ─── Header ───
-                _buildHeader(faction, gs.bankBalance, gs.currentLap),
-                // ─── Ascension Progress ───
-                _buildProgressBar(progress, metrics.totalScore),
-                // ─── Body ───
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Column(
-                      children: [
-                        MetricsRadarChart(metrics: metrics, faction: faction),
-                        const SizedBox(height: 20),
-                        StatusLog(
-                          activeCards: gs.activeCards,
-                          logEntries: gs.logEntries,
+          endDrawer: const TradeDrawer(),
+          body: Stack(
+            children: [
+              SafeArea(
+                child: Column(
+                  children: [
+                    // ─── Header ───
+                    _buildHeader(context, faction, gs.bankBalance, gs.currentLap),
+                    // ─── Turn Indicator ───
+                    _buildTurnIndicator(gs),
+                    // ─── Ascension Progress ───
+                    _buildProgressBar(progress, metrics.totalScore),
+                    // ─── Body ───
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: Column(
+                          children: [
+                            MetricsRadarChart(metrics: metrics, faction: faction),
+                            const SizedBox(height: 20),
+                            StatusLog(
+                              activeCards: gs.activeCards,
+                              logEntries: gs.logEntries,
+                            ),
+                            const SizedBox(height: 80),
+                          ],
                         ),
-                        const SizedBox(height: 80),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              if (gs.isEliminated)
+                Builder(builder: (ctx) => _buildEliminatedOverlay(ctx, gs)),
+              if (gs.isPromptingScan && !gs.isEliminated) _buildScanOverlay(gs),
+            ],
           ),
           // ─── Connection Status Bar ───
           bottomNavigationBar: _buildBottomBar(),
@@ -145,96 +156,245 @@ class _GamePageState extends State<GamePage> {
   }
 
   // ─────────────────────────────────────────────
+  // Scan Overlay
+  // ─────────────────────────────────────────────
+
+  Widget _buildScanOverlay(GameStateProvider gs) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.85),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.nfc_rounded,
+                size: 80,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                gs.scanPromptMessage ?? 'Please scan a card...',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Hold the physical card over the board reader',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Elimination Overlay
+  // ─────────────────────────────────────────────
+
+  Widget _buildEliminatedOverlay(BuildContext context, GameStateProvider gs) {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.9),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 80,
+                color: Colors.redAccent.shade200,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'CITY ELIMINATED',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                  color: Colors.redAccent.shade200,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Your metrics fell below the critical threshold.\nYou are now a spectator.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              OutlinedButton.icon(
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+                icon: const Icon(Icons.people_alt_rounded),
+                label: const Text('View Remaining Factions'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
   // Header
   // ─────────────────────────────────────────────
 
-  Widget _buildHeader(FactionType faction, int bank, int lap) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: faction.color.withValues(alpha: 0.08),
-        border: Border(
-          bottom: BorderSide(color: faction.color.withValues(alpha: 0.2)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: faction.color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(faction.icon, color: faction.color, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "MAYOR'S TERMINAL",
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2.5,
-                    color: Colors.white.withValues(alpha: 0.4),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  faction.displayName,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: faction.color,
-                  ),
-                ),
-              ],
+  Widget _buildHeader(BuildContext context, FactionType faction, int bank, int lap) {
+    return Builder(
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: faction.color.withValues(alpha: 0.08),
+            border: Border(
+              bottom: BorderSide(color: faction.color.withValues(alpha: 0.2)),
             ),
           ),
-          // Bank balance badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'LAP $lap',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                    color: Colors.white.withValues(alpha: 0.4),
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: faction.color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Icon(faction.icon, color: faction.color, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      size: 16,
-                      color: Color(0xFFFFCA28),
-                    ),
-                    const SizedBox(width: 6),
                     Text(
-                      '¤$bank',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      "MAYOR'S TERMINAL",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2.5,
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      faction.displayName,
+                      style: TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFFFCA28),
+                        color: faction.color,
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
+              // Bank balance badge & Trade drawer trigger
+              GestureDetector(
+                onTap: () => Scaffold.of(context).openEndDrawer(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'LAP $lap',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: Colors.white.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.people_outline, size: 12, color: Colors.white.withValues(alpha: 0.4)),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.account_balance_wallet_rounded,
+                            size: 16,
+                            color: Color(0xFFFFCA28),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '¤$bank',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFFFCA28),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // Turn Indicator
+  // ─────────────────────────────────────────────
+
+  Widget _buildTurnIndicator(GameStateProvider gs) {
+    if (gs.currentTurnFaction == null) return const SizedBox.shrink();
+
+    final isMyTurn = gs.currentTurnFaction == gs.faction;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      color: isMyTurn ? gs.faction.color.withValues(alpha: 0.8) : Colors.black45,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isMyTurn ? Icons.play_arrow_rounded : Icons.hourglass_empty_rounded,
+            color: isMyTurn ? Colors.white : gs.currentTurnFaction!.color,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isMyTurn 
+                ? "IT's YOUR TURN! Spin the encoder." 
+                : "Waiting for ${gs.currentTurnFaction!.displayName}...",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+              color: isMyTurn ? Colors.white : gs.currentTurnFaction!.color,
             ),
           ),
         ],

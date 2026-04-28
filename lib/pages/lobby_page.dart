@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../device_identity.dart';
 import '../network.dart';
 import '../protocol.dart';
 import 'game_page.dart';
@@ -27,6 +28,7 @@ class _LobbyPageState extends State<LobbyPage> {
   int _joinedPlayers = 0;
   int _readyPlayers = 0;
   int _totalPlayers = _defaultTotalPlayers;
+  List<Map<String, dynamic>> _players = [];
 
   @override
   void initState() {
@@ -67,9 +69,10 @@ class _LobbyPageState extends State<LobbyPage> {
       return;
     }
 
+    final deviceId = await DeviceIdentity.getDeviceId();
     final joinMessage = ProtocolMessage(
       type: MessageType.joinLobby,
-      payload: const {'platform': 'flutter'},
+      payload: {'device_id': deviceId, 'platform': 'flutter'},
     );
     widget.network.sendMessage(joinMessage.toJsonString());
 
@@ -81,13 +84,43 @@ class _LobbyPageState extends State<LobbyPage> {
     });
   }
 
+  Future<void> _reconnectGame() async {
+    if (_isJoining || _hasJoinedLobby) return;
+
+    setState(() {
+      _isJoining = true;
+      _status = 'Reconnecting to ESP...';
+    });
+
+    final ip = await widget.network.connect();
+    if (!mounted) return;
+
+    if (ip == null) {
+      setState(() => _isJoining = false);
+      return;
+    }
+
+    final deviceId = await DeviceIdentity.getDeviceId();
+    final reconnectMsg = ProtocolMessage(
+      type: MessageType.reconnect,
+      payload: {'device_id': deviceId},
+    );
+    widget.network.sendMessage(reconnectMsg.toJsonString());
+
+    setState(() {
+      _isJoining = false;
+      _hasJoinedLobby = true;
+      _status = 'Sent reconnect request. Waiting for full_sync...';
+    });
+  }
+
   void _sendReady() {
     if (!_hasJoinedLobby || _readySent) {
       return;
     }
 
     final readyMessage = ProtocolMessage(
-      type: MessageType.playerReady,
+      type: MessageType.setReady,
       payload: const {'ready': true},
     );
     widget.network.sendMessage(readyMessage.toJsonString());
@@ -106,7 +139,8 @@ class _LobbyPageState extends State<LobbyPage> {
       return;
     }
 
-    if (message.type == MessageType.gameStart) {
+    if (message.type == MessageType.gameStart ||
+        message.type == MessageType.fullSync) {
       _goToGame();
       return;
     }
@@ -126,6 +160,7 @@ class _LobbyPageState extends State<LobbyPage> {
       'joined_players',
       'joined',
       'connected_players',
+      'total_connected',
     ]);
     final ready = _readInt(payload, const ['ready_players', 'ready_count']);
     final total = _readInt(payload, const [
@@ -133,6 +168,7 @@ class _LobbyPageState extends State<LobbyPage> {
       'required_players',
       'total',
     ]);
+    final playersList = payload['players'] as List<dynamic>?;
 
     if (!mounted) {
       return;
@@ -148,6 +184,9 @@ class _LobbyPageState extends State<LobbyPage> {
       }
       if (total != null && total > 0) {
         _totalPlayers = total;
+      }
+      if (playersList != null) {
+        _players = playersList.map((e) => e as Map<String, dynamic>).toList();
       }
 
       final allJoined = _joinedPlayers >= _totalPlayers;
@@ -224,6 +263,7 @@ class _LobbyPageState extends State<LobbyPage> {
               joinedPlayers: _joinedPlayers,
               readyPlayers: _readyPlayers,
               totalPlayers: _totalPlayers,
+              players: _players,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -236,6 +276,14 @@ class _LobbyPageState extends State<LobbyPage> {
                     )
                   : const Icon(Icons.login_rounded),
               label: Text(_hasJoinedLobby ? 'Joined Lobby' : 'Join Lobby'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: (_isJoining || _hasJoinedLobby)
+                  ? null
+                  : _reconnectGame,
+              icon: const Icon(Icons.restore_rounded),
+              label: const Text('Reconnect to Active Game'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -263,11 +311,13 @@ class _LobbyCounterCard extends StatelessWidget {
   final int joinedPlayers;
   final int readyPlayers;
   final int totalPlayers;
+  final List<Map<String, dynamic>> players;
 
   const _LobbyCounterCard({
     required this.joinedPlayers,
     required this.readyPlayers,
     required this.totalPlayers,
+    required this.players,
   });
 
   @override
@@ -287,6 +337,35 @@ class _LobbyCounterCard extends StatelessWidget {
           _buildRow('Players Joined', joinedText, Icons.people_outline_rounded),
           const Divider(height: 20),
           _buildRow('Players Ready', readyText, Icons.done_all_rounded),
+          if (players.isNotEmpty) ...[
+            const Divider(height: 20),
+            const Text(
+              'Connected Factions:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...players.map((p) {
+              final String faction = p['faction']?.toString() ?? 'Unknown';
+              final bool isReady = p['is_ready'] == true || p['ready'] == true;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      isReady ? Icons.check_circle : Icons.hourglass_empty,
+                      color: isReady ? Colors.greenAccent : Colors.orangeAccent,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(faction, style: const TextStyle(color: Colors.white)),
+                  ],
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
