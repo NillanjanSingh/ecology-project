@@ -57,6 +57,20 @@ class MetricsRadarChart extends StatelessWidget {
             child: RadarChart(
               RadarChartData(
                 dataSets: [
+                  // Invisible dummy dataset to lock the center at 0
+                  RadarDataSet(
+                    fillColor: Colors.transparent,
+                    borderColor: Colors.transparent,
+                    borderWidth: 0,
+                    entryRadius: 0,
+                    dataEntries: const [
+                      RadarEntry(value: 0),
+                      RadarEntry(value: 0),
+                      RadarEntry(value: 0),
+                      RadarEntry(value: 0),
+                    ],
+                  ),
+                  // Actual player metrics
                   RadarDataSet(
                     fillColor: accentColor.withValues(alpha: 0.18),
                     borderColor: accentColor,
