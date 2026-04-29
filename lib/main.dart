@@ -28,6 +28,7 @@ class _EcologyAppState extends State<EcologyApp> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => GameStateProvider(network: network),
+      lazy: false,
       child: MaterialApp(
         title: 'Mayor\'s Terminal',
         debugShowCheckedModeBanner: false,

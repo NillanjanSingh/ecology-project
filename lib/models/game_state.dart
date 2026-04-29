@@ -269,7 +269,7 @@ class GameStateProvider extends ChangeNotifier {
   // --- Connection ---
   final NetworkManager network;
   StreamSubscription<String>? _subscription;
-  String? _deviceId;
+  String? deviceId;
 
   // --- Player Identity ---
   FactionType? _faction;
@@ -383,7 +383,7 @@ class GameStateProvider extends ChangeNotifier {
         _handleCardResolved(msg.payload);
         break;
       case MessageType.promptPurchase:
-        if (!_requireMapFields(msg.payload, const ['name', 'cost'])) return;
+        if (!_requireMapFields(msg.payload, const ['name', 'budget', 'provider_option'])) return;
         _isPromptingScan = false;
         _handlePurchasePrompt(msg.payload);
         break;
@@ -735,14 +735,14 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   Future<void> _loadDeviceId() async {
-    _deviceId = await DeviceIdentity.getDeviceId();
+    deviceId = await DeviceIdentity.getDeviceId();
   }
 
   Map<String, dynamic> _withActorDeviceId(Map<String, dynamic> payload) {
-    if (_deviceId == null || _deviceId!.isEmpty) {
+    if (deviceId == null || deviceId!.isEmpty) {
       return payload;
     }
-    return {'device_id': _deviceId!, ...payload};
+    return {'device_id': deviceId!, ...payload};
   }
 
   bool _requireMapFields(

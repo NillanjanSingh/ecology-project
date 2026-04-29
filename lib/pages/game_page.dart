@@ -121,12 +121,16 @@ class _GamePageState extends State<GamePage> {
                     // ─── Ascension Progress ───
                     _buildProgressBar(progress, metrics.totalScore),
                     // ─── Body ───
+                    Text("device id: ${gs.deviceId}"),
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         child: Column(
                           children: [
-                            MetricsRadarChart(metrics: metrics, faction: gs.faction),
+                            MetricsRadarChart(
+                              metrics: metrics,
+                              faction: gs.faction,
+                            ),
                             const SizedBox(height: 20),
                             StatusLog(
                               activeCards: gs.activeCards,
@@ -164,11 +168,7 @@ class _GamePageState extends State<GamePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.nfc_rounded,
-                size: 80,
-                color: Colors.white,
-              ),
+              const Icon(Icons.nfc_rounded, size: 80, color: Colors.white),
               const SizedBox(height: 24),
               Text(
                 gs.scanPromptMessage ?? 'Please scan a card...',
@@ -240,7 +240,10 @@ class _GamePageState extends State<GamePage> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -311,11 +314,16 @@ class _GamePageState extends State<GamePage> {
               GestureDetector(
                 onTap: () => Scaffold.of(context).openEndDrawer(),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -332,7 +340,11 @@ class _GamePageState extends State<GamePage> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.people_outline, size: 12, color: Colors.white.withValues(alpha: 0.4)),
+                          Icon(
+                            Icons.people_outline,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -362,7 +374,7 @@ class _GamePageState extends State<GamePage> {
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -373,7 +385,8 @@ class _GamePageState extends State<GamePage> {
   Widget _buildTurnIndicator(GameStateProvider gs) {
     if (gs.currentTurnFaction == null) return const SizedBox.shrink();
 
-    final isMyTurn = gs.hasAssignedFaction && gs.currentTurnFaction == gs.faction;
+    final isMyTurn =
+        gs.hasAssignedFaction && gs.currentTurnFaction == gs.faction;
     final bannerColor = isMyTurn
         ? gs.factionColor.withValues(alpha: 0.8)
         : Colors.black45;
@@ -392,8 +405,8 @@ class _GamePageState extends State<GamePage> {
           ),
           const SizedBox(width: 8),
           Text(
-            isMyTurn 
-                ? "IT's YOUR TURN! Spin the encoder." 
+            isMyTurn
+                ? "IT's YOUR TURN! Spin the encoder."
                 : gs.hasAssignedFaction
                 ? "Waiting for ${gs.currentTurnFaction!.displayName}..."
                 : "Faction pending. Waiting for ${gs.currentTurnFaction!.displayName}...",
