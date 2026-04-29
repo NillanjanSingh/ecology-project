@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../network.dart';
-import 'testing_page.dart';
 import 'lobby_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -93,20 +92,6 @@ class HomePage extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 20),
-                _buildMenuButton(
-                  context: context,
-                  icon: Icons.developer_mode,
-                  label: "TESTING MODE",
-                  isSecondary: true,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TestingModePage(network: network),
-                      ),
-                    );
-                  },
-                ),
                 const Spacer(),
               ],
             ),
