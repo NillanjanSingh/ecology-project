@@ -16,6 +16,7 @@ enum MessageType {
   actionPurchase,
   actionCardChoice,
   actionTransferFunds,
+  actionViewOwnership,
 
   // Server Truths (ESP32 -> App)
   lobbyState,
@@ -31,6 +32,7 @@ enum MessageType {
   cardResolved,
   timeoutWarning,
   gameState,
+  ownershipState,
 
   // Hardware events / Testing
   rfid,
@@ -56,6 +58,7 @@ class ProtocolMessage {
     'action_purchase': MessageType.actionPurchase,
     'action_card_choice': MessageType.actionCardChoice,
     'action_transfer_funds': MessageType.actionTransferFunds,
+    'action_view_ownership': MessageType.actionViewOwnership,
     'lobby_state': MessageType.lobbyState,
     'player_assignment': MessageType.playerAssignment,
     'game_start': MessageType.gameStart,
@@ -69,6 +72,7 @@ class ProtocolMessage {
     'card_resolved': MessageType.cardResolved,
     'timeout_warning': MessageType.timeoutWarning,
     'game_state': MessageType.gameState,
+    'ownership_state': MessageType.ownershipState,
     'rfid': MessageType.rfid,
     'encoder': MessageType.encoder,
     'card_action': MessageType.cardAction,
@@ -81,6 +85,7 @@ class ProtocolMessage {
     MessageType.actionPurchase: 'action_purchase',
     MessageType.actionCardChoice: 'action_card_choice',
     MessageType.actionTransferFunds: 'action_transfer_funds',
+    MessageType.actionViewOwnership: 'action_view_ownership',
     MessageType.lobbyState: 'lobby_state',
     MessageType.playerAssignment: 'player_assignment',
     MessageType.gameStart: 'game_start',
@@ -94,6 +99,7 @@ class ProtocolMessage {
     MessageType.cardResolved: 'card_resolved',
     MessageType.timeoutWarning: 'timeout_warning',
     MessageType.gameState: 'game_state',
+    MessageType.ownershipState: 'ownership_state',
     MessageType.rfid: 'rfid',
     MessageType.encoder: 'encoder',
     MessageType.cardAction: 'card_action',

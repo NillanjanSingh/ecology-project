@@ -65,6 +65,14 @@ void main() {
         ).toJsonString(),
         contains('"type":"action_transfer_funds"'),
       );
+
+      expect(
+        ProtocolMessage(
+          type: MessageType.actionViewOwnership,
+          payload: {'device_id': 'abc', 'scope': 'all'},
+        ).toJsonString(),
+        contains('"type":"action_view_ownership"'),
+      );
     });
 
     test('decodes documented server truths', () {
@@ -82,6 +90,7 @@ void main() {
         'card_resolved': MessageType.cardResolved,
         'timeout_warning': MessageType.timeoutWarning,
         'game_state': MessageType.gameState,
+        'ownership_state': MessageType.ownershipState,
       };
 
       for (final entry in samples.entries) {

@@ -58,6 +58,7 @@ class PlayerData {
   final bool isEliminated;
   final int bankBalance;
   final PlayerMetrics metrics;
+  final List<String> ownedItems;
 
   PlayerData({
     this.deviceId,
@@ -65,6 +66,7 @@ class PlayerData {
     required this.isEliminated,
     required this.bankBalance,
     required this.metrics,
+    this.ownedItems = const [],
   });
 
   factory PlayerData.fromMap(
@@ -77,7 +79,35 @@ class PlayerData {
       isEliminated: map['is_eliminated'] == true,
       bankBalance: map['bank_balance'] ?? 0,
       metrics: PlayerMetrics.fromMap(map['metrics'] ?? {}),
+      ownedItems: _parseOwnedItems(map),
     );
+  }
+
+  static List<String> _parseOwnedItems(Map<String, dynamic> map) {
+    const keys = [
+      'owned_items',
+      'owned_infrastructure',
+      'purchased_items',
+      'inventory',
+      'assets',
+    ];
+
+    for (final key in keys) {
+      final value = map[key];
+      if (value is List) {
+        return value
+            .map((e) {
+              if (e is String) return e.trim();
+              if (e is Map<String, dynamic>) {
+                return e['name']?.toString().trim() ?? '';
+              }
+              return e.toString().trim();
+            })
+            .where((name) => name.isNotEmpty)
+            .toList();
+      }
+    }
+    return const [];
   }
 
   static FactionType? _parseFactionStatic(dynamic value) {
@@ -317,6 +347,15 @@ class GameStateProvider extends ChangeNotifier {
     return _allPlayers.where((p) => p.faction != _faction).toList();
   }
 
+  PlayerData? get myPlayerData {
+    if (_faction == null) return null;
+    try {
+      return _allPlayers.firstWhere((p) => p.faction == _faction);
+    } catch (_) {
+      return null;
+    }
+  }
+
   // --- Pending Prompts (for modals) ---
   PurchasePrompt? _pendingPurchase;
   PurchasePrompt? get pendingPurchase => _pendingPurchase;
@@ -361,6 +400,10 @@ class GameStateProvider extends ChangeNotifier {
       case MessageType.playerAssignment:
         if (!_requireMapFields(msg.payload, const ['faction'])) return;
         _handlePlayerAssignment(msg.payload);
+        break;
+      case MessageType.ownershipState:
+        if (!_requireMapFields(msg.payload, const ['players'])) return;
+        _handleOwnershipState(msg.payload);
         break;
       case MessageType.turnUpdate:
         if (!_requireAnyMapFields(msg.payload, const ['active_faction', 'active_device_id'])) {
@@ -428,6 +471,7 @@ class GameStateProvider extends ChangeNotifier {
       case MessageType.joinLobby:
       case MessageType.setReady:
       case MessageType.gameStart:
+      case MessageType.actionViewOwnership:
         // Lobby events are handled by the lobby screen; ignore in in-game state.
         break;
       default:
@@ -578,6 +622,51 @@ class GameStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _handleOwnershipState(Map<String, dynamic> payload) {
+    final playersList = payload['players'] as List<dynamic>?;
+    if (playersList == null) return;
+
+    if (_allPlayers.isEmpty) {
+      _allPlayers = playersList
+          .map(
+            (p) => PlayerData.fromMap(
+              p as Map<String, dynamic>,
+              _faction ?? FactionType.natural,
+            ),
+          )
+          .toList();
+    } else {
+      final updatedPlayers = playersList
+          .map((p) => p as Map<String, dynamic>)
+          .map(
+            (p) => PlayerData.fromMap(
+              p,
+              _faction ?? FactionType.natural,
+            ),
+          )
+          .toList();
+
+      _allPlayers = _allPlayers.map((existing) {
+        for (final candidate in updatedPlayers) {
+          if (existing.deviceId != null &&
+              existing.deviceId!.isNotEmpty &&
+              candidate.deviceId == existing.deviceId) {
+            return candidate;
+          }
+        }
+        for (final candidate in updatedPlayers) {
+          if (candidate.faction == existing.faction) {
+            return candidate;
+          }
+        }
+        return existing;
+      }).toList();
+    }
+
+    _addLog('Ownership state refreshed.', severity: 'info');
+    notifyListeners();
+  }
+
   // -------------------------------------------------------
   // Outgoing actions (App → ESP32)
   // -------------------------------------------------------
@@ -635,6 +724,14 @@ class GameStateProvider extends ChangeNotifier {
       payload['target_device_id'] = targetDeviceId;
     }
     return _withActorDeviceId(payload);
+  }
+
+  void requestOwnershipState({String scope = 'all'}) {
+    final msg = ProtocolMessage(
+      type: MessageType.actionViewOwnership,
+      payload: _withActorDeviceId({'scope': scope}),
+    );
+    network.sendMessage(msg.toJsonString());
   }
 
   // -------------------------------------------------------

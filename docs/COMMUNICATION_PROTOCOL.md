@@ -103,6 +103,22 @@ Sent asynchronously when a player wants to trade/send points to another city.
 
 `target_device_id` should be treated as the authoritative transfer target. `target_faction` is retained as a readable fallback and audit field.
 
+### `action_view_ownership`
+Sent when a player opens the Ownership panel (or taps refresh) to request current ownership snapshots.
+```json
+{
+  "type": "action_view_ownership",
+  "payload": {
+    "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "scope": "all"
+  }
+}
+```
+
+`scope` values:
+- `all`: return all players and their owned items
+- `self`: return only requesting player ownership
+
 ---
 
 ## 2. Server-to-Client (ESP32 → App)
@@ -371,6 +387,10 @@ The master state payload. Broadcasted after ANY mathematical change (metrics, po
             "name": "Solar Power Plant + Desalination Plant"
           }
         ],
+        "owned_items": [
+          "Solar Power Plant",
+          "Desalination Plant"
+        ],
         "future_effect_queue": [
           {
             "source": "Solar Power Plant",
@@ -397,10 +417,38 @@ The master state payload. Broadcasted after ANY mathematical change (metrics, po
 Notes:
 - `Emission` and `Pollution Index` are burden metrics where lower values are better.
 - Synergy points are added directly to the player's current total points when the ESP32 confirms a same-city ownership match.
+- `owned_items` is the normalized display list for what that player currently owns/bought. The app displays this list for both self and opponents in the Ownership panel.
 
 Valid faction values in all payloads are `Natural`, `Manufacturing`, `Tourism`, and `Technological`.
 
 `device_id` is the authoritative unique player identifier. Any message that references a specific player should include that player's `device_id` whenever possible, even if a faction label is also present for readability.
+
+### `ownership_state`
+Sent as a response to `action_view_ownership`. Can also be broadcast by ESP32 after ownership-changing actions.
+```json
+{
+  "type": "ownership_state",
+  "payload": {
+    "players": [
+      {
+        "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "faction": "Natural",
+        "owned_items": [
+          "Solar Power Plant",
+          "Desalination Plant"
+        ]
+      },
+      {
+        "device_id": "0f9e8d7c-6b5a-4321-aaaa-bbccccddeeff",
+        "faction": "Technological",
+        "owned_items": [
+          "Data Center"
+        ]
+      }
+    ]
+  }
+}
+```
 
 ### `full_sync`
 Sent ONLY in response to a `reconnect` message from a crashed app.

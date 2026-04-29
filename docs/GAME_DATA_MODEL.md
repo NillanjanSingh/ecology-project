@@ -154,6 +154,7 @@ The ESP32 should be authoritative for all long-lived state, including:
 - `Emission` and `Pollution Index` are burden metrics where lower values are better
 
 The Flutter app should be a rendering client for this state.
+For ownership visibility, ESP32 should include a normalized `owned_items` string list per player in `game_state.players[]` (and optionally `ownership_state` snapshots) so clients can render self and opponent inventories consistently.
 
 ## 7. Gaps Requiring Rule Decisions
 
