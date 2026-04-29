@@ -251,6 +251,10 @@ class PurchasePrompt {
   final String description;
   final int providerCost;
   final int? takerCost;
+  final bool providerAvailable;
+  final bool takerAvailable;
+  final bool isOwned;
+  final String? ownerFaction;
   final Map<String, dynamic> effects;
 
   PurchasePrompt({
@@ -258,6 +262,10 @@ class PurchasePrompt {
     this.description = '',
     required this.providerCost,
     this.takerCost,
+    this.providerAvailable = true,
+    this.takerAvailable = true,
+    this.isOwned = false,
+    this.ownerFaction,
     this.effects = const {},
   });
 
@@ -272,12 +280,20 @@ class PurchasePrompt {
     final takerCost =
         _asInt(takerOption?['cost_points']) ?? _asInt(map['taker_cost']);
     final immediateScores = map['immediate_scores'] as Map<String, dynamic>?;
+    final providerAvailable = _asBool(providerOption?['available']) ?? true;
+    final takerAvailable = _asBool(takerOption?['available']) ?? true;
+    final isOwned = _asBool(map['is_owned']) ?? false;
+    final ownerFaction = map['owner_faction']?.toString();
 
     return PurchasePrompt(
       infrastructureName: map['name']?.toString() ?? 'Unknown',
       description: map['description']?.toString() ?? '',
       providerCost: providerCost,
       takerCost: takerCost,
+      providerAvailable: providerAvailable,
+      takerAvailable: takerAvailable,
+      isOwned: isOwned,
+      ownerFaction: ownerFaction,
       effects: immediateScores ?? map['effects'] ?? {},
     );
   }
@@ -286,6 +302,15 @@ class PurchasePrompt {
     if (value is int) return value;
     if (value is num) return value.round();
     if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static bool? _asBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is String) {
+      if (value.toLowerCase() == 'true') return true;
+      if (value.toLowerCase() == 'false') return false;
+    }
     return null;
   }
 }
@@ -903,8 +928,9 @@ class GameStateProvider extends ChangeNotifier {
         'description':
             'A large solar panel array. Boosts sustainability and economy.',
         'budget': 350,
-        'provider_option': {'cost_points': 350},
-        'taker_option': {'cost_points': 90},
+        'is_owned': false,
+        'provider_option': {'cost_points': 350, 'available': true},
+        'taker_option': {'cost_points': 90, 'available': true},
         'immediate_scores': {'sustainability': 50, 'economy': 20},
       },
     };

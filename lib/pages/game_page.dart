@@ -57,8 +57,13 @@ class _GamePageState extends State<GamePage> {
         description: p.description,
         providerCost: p.providerCost,
         takerCost: p.takerCost,
+        providerAvailable: p.providerAvailable,
+        takerAvailable: p.takerAvailable,
+        isOwned: p.isOwned,
+        ownerFaction: p.ownerFaction,
         currentBalance: gs.bankBalance,
         effects: p.effects,
+        onRefreshOwnership: () => gs.requestOwnershipState(),
         onAction: (action) {
           _isPurchaseDialogOpen = false;
           gs.sendPurchaseResponse(action);

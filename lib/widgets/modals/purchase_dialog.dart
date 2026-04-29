@@ -6,8 +6,13 @@ class PurchaseDialog extends StatelessWidget {
   final String description;
   final int providerCost;
   final int? takerCost;
+  final bool providerAvailable;
+  final bool takerAvailable;
+  final bool isOwned;
+  final String? ownerFaction;
   final int currentBalance;
   final Map<String, dynamic> effects;
+  final VoidCallback onRefreshOwnership;
   final ValueChanged<String> onAction;
 
   const PurchaseDialog({
@@ -16,13 +21,20 @@ class PurchaseDialog extends StatelessWidget {
     this.description = '',
     required this.providerCost,
     this.takerCost,
+    this.providerAvailable = true,
+    this.takerAvailable = true,
+    this.isOwned = false,
+    this.ownerFaction,
     required this.currentBalance,
     this.effects = const {},
+    required this.onRefreshOwnership,
     required this.onAction,
   });
 
-  bool get canAffordProvider => currentBalance >= providerCost;
-  bool get canAffordTaker => takerCost != null && currentBalance >= takerCost!;
+  bool get canAffordProvider =>
+      providerAvailable && currentBalance >= providerCost;
+  bool get canAffordTaker =>
+      takerAvailable && takerCost != null && currentBalance >= takerCost!;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +111,34 @@ class PurchaseDialog extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                    if (isOwned) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFCA28).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFFFFCA28).withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Text(
+                          ownerFaction == null
+                              ? 'Already provider-owned'
+                              : 'Already provider-owned by $ownerFaction',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFFFFCA28),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -213,7 +253,11 @@ class PurchaseDialog extends StatelessWidget {
                               elevation: 0,
                             ),
                             child: Text(
-                              canAffordProvider ? 'PROVIDER' : 'CAN\'T AFFORD',
+                              providerAvailable
+                                  ? (canAffordProvider
+                                        ? 'PROVIDER'
+                                        : 'CAN\'T AFFORD')
+                                  : 'PROVIDER UNAVAILABLE',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
@@ -243,7 +287,9 @@ class PurchaseDialog extends StatelessWidget {
                             elevation: 0,
                           ),
                           child: Text(
-                            'TAKER (¤$takerCost)',
+                            takerAvailable
+                                ? 'TAKER (¤$takerCost)'
+                                : 'TAKER UNAVAILABLE',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
@@ -253,6 +299,15 @@ class PurchaseDialog extends StatelessWidget {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: onRefreshOwnership,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Refresh from server'),
+                      ),
+                    ),
                   ],
                 ),
               ),

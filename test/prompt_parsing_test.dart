@@ -26,14 +26,31 @@ void main() {
       final prompt = PurchasePrompt.fromMap({
         'name': 'Solar Power Plant',
         'budget': 100,
+        'is_owned': true,
+        'owner_faction': 'Natural',
         'provider_option': {'cost_points': 100},
-        'taker_option': {'cost_points': 25},
+        'taker_option': {'cost_points': 25, 'available': true},
         'immediate_scores': {'sustainability': 8},
       });
 
       expect(prompt.providerCost, 100);
       expect(prompt.takerCost, 25);
+      expect(prompt.isOwned, isTrue);
+      expect(prompt.ownerFaction, 'Natural');
+      expect(prompt.takerAvailable, isTrue);
       expect(prompt.effects['sustainability'], 8);
+    });
+
+    test('PurchasePrompt honors provider/taker availability flags', () {
+      final prompt = PurchasePrompt.fromMap({
+        'name': 'Solar Power Plant',
+        'budget': 100,
+        'provider_option': {'cost_points': 100, 'available': false},
+        'taker_option': {'cost_points': 25, 'available': true},
+      });
+
+      expect(prompt.providerAvailable, isFalse);
+      expect(prompt.takerAvailable, isTrue);
     });
 
     test('PlayerData parses legacy keys and numeric faction ids', () {

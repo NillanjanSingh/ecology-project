@@ -210,13 +210,17 @@ Sent to the active player when they land on an infrastructure tile. Starts a 60-
     "location": 1,
     "budget": 100000000,
     "base_balance": 60,
+    "is_owned": true,
+    "owner_faction": "Natural",
     "provider_option": {
       "cost_points": 100000000,
-      "future_income_model": "service_usage_based"
+      "future_income_model": "service_usage_based",
+      "available": false
     },
     "taker_option": {
       "cost_points": 25000000,
-      "benefit_model": "25_percent_for_3_rounds"
+      "benefit_model": "25_percent_for_3_rounds",
+      "available": true
     },
     "immediate_scores": {
       "sustainability": 8,
@@ -247,6 +251,11 @@ Notes:
 - `provider_option.cost_points` equals the `budget`.
 - `taker_option.cost_points` equals `25%` of the provider cost for the next `3` rounds.
 - Every player starts with a base of `60cr`.
+- `is_owned` indicates whether a provider already exists on this tile.
+- `owner_faction` is included when `is_owned = true`.
+- `provider_option.available` controls if provider action can be selected in the app.
+- `taker_option.available` controls if taker action can be selected in the app.
+- If a button is unavailable, the app must render it disabled (greyed out).
 
 ### `prompt_card_choice`
 Sent to the active player after they scan a choice-based card from `Policy` or `Event-1`. Starts a 60-second timer.
