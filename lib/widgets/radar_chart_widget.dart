@@ -6,7 +6,7 @@ import '../models/game_state.dart';
 /// Adapts its accent color based on the player's faction.
 class MetricsRadarChart extends StatelessWidget {
   final PlayerMetrics metrics;
-  final FactionType faction;
+  final FactionType? faction;
 
   /// Maximum value a single metric axis can show.
   /// This should match the game's max per-category score.
@@ -21,7 +21,7 @@ class MetricsRadarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = faction.color;
+    final accentColor = faction?.color ?? const Color(0xFF78909C);
 
     return Container(
       padding: const EdgeInsets.all(16),

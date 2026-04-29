@@ -24,6 +24,7 @@ class _LobbyPageState extends State<LobbyPage> {
   bool _isJoining = false;
   bool _hasJoinedLobby = false;
   bool _readySent = false;
+  String? _assignedFaction;
 
   int _joinedPlayers = 0;
   int _readyPlayers = 0;
@@ -114,14 +115,15 @@ class _LobbyPageState extends State<LobbyPage> {
     });
   }
 
-  void _sendReady() {
+  Future<void> _sendReady() async {
     if (!_hasJoinedLobby || _readySent) {
       return;
     }
 
+    final deviceId = await DeviceIdentity.getDeviceId();
     final readyMessage = ProtocolMessage(
       type: MessageType.setReady,
-      payload: const {'ready': true},
+      payload: {'device_id': deviceId, 'ready': true},
     );
     widget.network.sendMessage(readyMessage.toJsonString());
 
@@ -139,11 +141,34 @@ class _LobbyPageState extends State<LobbyPage> {
       return;
     }
 
+    if (message.type == MessageType.playerAssignment) {
+      _applyPlayerAssignment(message.payload);
+      return;
+    }
+
     if (message.type == MessageType.gameStart ||
         message.type == MessageType.fullSync) {
       _goToGame();
       return;
     }
+  }
+
+  void _applyPlayerAssignment(Map<String, dynamic> payload) {
+    if (!mounted) {
+      return;
+    }
+
+    final faction = payload['faction']?.toString();
+    final confirmedReady = payload['ready_confirmed'] == true;
+
+    setState(() {
+      _assignedFaction = faction;
+      _status = faction == null
+          ? 'Ready acknowledged. Waiting for faction assignment...'
+          : confirmedReady
+          ? 'Ready confirmed. Assigned faction: $faction'
+          : 'Faction assigned: $faction';
+    });
   }
 
   void _applyLobbyState(Map<String, dynamic> payload) {
@@ -255,6 +280,7 @@ class _LobbyPageState extends State<LobbyPage> {
               readyPlayers: _readyPlayers,
               totalPlayers: _totalPlayers,
               players: _players,
+              assignedFaction: _assignedFaction,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -278,7 +304,7 @@ class _LobbyPageState extends State<LobbyPage> {
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: (!_hasJoinedLobby || _readySent) ? null : _sendReady,
+              onPressed: (!_hasJoinedLobby || _readySent) ? null : () => _sendReady(),
               icon: const Icon(Icons.check_circle_outline_rounded),
               label: Text(_readySent ? 'Ready Sent' : "I'm Ready"),
             ),
@@ -303,12 +329,14 @@ class _LobbyCounterCard extends StatelessWidget {
   final int readyPlayers;
   final int totalPlayers;
   final List<Map<String, dynamic>> players;
+  final String? assignedFaction;
 
   const _LobbyCounterCard({
     required this.joinedPlayers,
     required this.readyPlayers,
     required this.totalPlayers,
     required this.players,
+    required this.assignedFaction,
   });
 
   @override
@@ -328,6 +356,14 @@ class _LobbyCounterCard extends StatelessWidget {
           _buildRow('Players Joined', joinedText, Icons.people_outline_rounded),
           const Divider(height: 20),
           _buildRow('Players Ready', readyText, Icons.done_all_rounded),
+          if (assignedFaction != null) ...[
+            const Divider(height: 20),
+            _buildRow(
+              'Your Faction',
+              assignedFaction!,
+              Icons.badge_outlined,
+            ),
+          ],
           if (players.isNotEmpty) ...[
             const Divider(height: 20),
             const Text(

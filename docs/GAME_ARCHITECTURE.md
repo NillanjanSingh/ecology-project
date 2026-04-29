@@ -23,9 +23,10 @@ For the structured gameplay dataset behind this architecture, see `GAME_DATA_MOD
 2. **Join Request:** App sends a `join_lobby` message containing its `device_id`.
 3. **Faction Assignment:** The ESP32 checks if this `device_id` is known. If new, it assigns an available city type (Natural, Manufacturing, Tourism, Technological) and adds them to the lobby.
 4. **Lobby Broadcast:** ESP32 broadcasts `lobby_state` to all connected phones (e.g., *"3/4 Players Connected. Natural is Ready, Technological is Not Ready"*).
-5. **Ready Up:** Players tap "Ready" on their phones. The app sends `set_ready`.
-6. **Game Start:** Once the ESP32 registers 4 ready players, it initializes the baseline metrics, creates an empty `discard_pile` array for scanned cards, and broadcasts `game_start` followed by the initial `game_state`.
-7. **Data Load:** Before or during game start, the ESP32 loads the `34` infrastructure records, the `20` special cards (`40` option rows), and the `13` synergy definitions into its authoritative rules engine.
+5. **Ready Up:** Players tap "Ready" on their phones. The app sends `set_ready` including its `device_id`.
+6. **Assignment Confirmation:** The ESP32 sends a direct `player_assignment` message back to that same device confirming the `device_id` to city mapping (for example, *"UUID abc123 is Technological"*). The Flutter app must use this server-assigned faction and must not hardcode a local default.
+7. **Game Start:** Once the ESP32 registers 4 ready players, it initializes the baseline metrics, creates an empty `discard_pile` array for scanned cards, and broadcasts `game_start` followed by the initial `game_state`.
+8. **Data Load:** Before or during game start, the ESP32 loads the `34` infrastructure records, the `20` special cards (`40` option rows), and the `13` synergy definitions into its authoritative rules engine.
 
 ---
 
@@ -83,7 +84,7 @@ The ESP32 looks at what tile the player landed on, enters a **"Pending State"**,
 **Goal:** Allow players to bail each other out without breaking the turn sequence.
 
 * At any time, Player A can open the "Trade" tab and attempt to send 20 points to Player B.
-* Player A's app sends `action_transfer_funds` (Target: Player B, Amount: 20).
+* Player A's app sends `action_transfer_funds` (Sender `device_id`, Target `device_id`, Amount: 20). The target faction label may also be included as a readable fallback.
 * The ESP32 intercepts this. It verifies Player A has `>= 20` points. 
 * If valid, ESP32 deducts 20 from A, adds 20 to B, and broadcasts a fresh `game_state` with an attached notification: *"Technological City transferred 20 points to Natural City!"*
 * *Crucial Benefit:* Because the ESP32 holds the state, this prevents the "double-spend" exploit where a player tries to send money they don't have.
@@ -112,13 +113,14 @@ The ESP32 looks at what tile the player landed on, enters a **"Pending State"**,
 ### App -> ESP32 (Client Intents)
 * `join_lobby` (Includes `device_id`)
 * `reconnect` (Includes `device_id`)
-* `set_ready` (boolean)
-* `action_purchase` (`provider`, `taker`, or `skip`)
-* `action_card_choice` ("A" or "B")
-* `action_transfer_funds` (Target Faction, Amount)
+* `set_ready` (Includes `device_id`, boolean)
+* `action_purchase` (Includes `device_id`, `provider`, `taker`, or `skip`)
+* `action_card_choice` (Includes `device_id`, "A" or "B")
+* `action_transfer_funds` (Includes sender `device_id`, target `device_id`, Amount)
 
 ### ESP32 -> App (Server Truths)
 * `lobby_state` (Current lobby status)
+* `player_assignment` (Direct confirmation of the device's assigned faction after ready-up)
 * `game_start` (Triggers UI transition)
 * `full_sync` (Sent on reconnect)
 * `turn_update` (Who is playing now)

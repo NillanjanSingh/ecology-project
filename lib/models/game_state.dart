@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../protocol.dart';
 import '../network.dart';
+import '../device_identity.dart';
 import '../log.dart';
 import 'dart:async';
 
@@ -52,12 +53,14 @@ extension FactionTypeExtension on FactionType {
 }
 
 class PlayerData {
+  final String? deviceId;
   final FactionType faction;
   final bool isEliminated;
   final int bankBalance;
   final PlayerMetrics metrics;
 
   PlayerData({
+    this.deviceId,
     required this.faction,
     required this.isEliminated,
     required this.bankBalance,
@@ -69,6 +72,7 @@ class PlayerData {
     FactionType defaultFaction,
   ) {
     return PlayerData(
+      deviceId: map['device_id']?.toString(),
       faction: _parseFactionStatic(map['faction']) ?? defaultFaction,
       isEliminated: map['is_eliminated'] == true,
       bankBalance: map['bank_balance'] ?? 0,
@@ -265,10 +269,15 @@ class GameStateProvider extends ChangeNotifier {
   // --- Connection ---
   final NetworkManager network;
   StreamSubscription<String>? _subscription;
+  String? _deviceId;
 
   // --- Player Identity ---
-  FactionType _faction = FactionType.natural;
-  FactionType get faction => _faction;
+  FactionType? _faction;
+  FactionType? get faction => _faction;
+  bool get hasAssignedFaction => _faction != null;
+  String get factionLabel => _faction?.displayName ?? 'Unassigned';
+  Color get factionColor => _faction?.color ?? const Color(0xFF78909C);
+  IconData get factionIcon => _faction?.icon ?? Icons.help_outline_rounded;
 
   // --- Metrics ---
   PlayerMetrics _metrics = const PlayerMetrics();
@@ -303,8 +312,10 @@ class GameStateProvider extends ChangeNotifier {
   List<PlayerData> _allPlayers = [];
   List<PlayerData> get allPlayers => List.unmodifiable(_allPlayers);
 
-  List<PlayerData> get opponents =>
-      _allPlayers.where((p) => p.faction != _faction).toList();
+  List<PlayerData> get opponents {
+    if (_faction == null) return const [];
+    return _allPlayers.where((p) => p.faction != _faction).toList();
+  }
 
   // --- Pending Prompts (for modals) ---
   PurchasePrompt? _pendingPurchase;
@@ -322,6 +333,7 @@ class GameStateProvider extends ChangeNotifier {
   static const int ascensionTarget = 4000;
 
   GameStateProvider({required this.network}) {
+    _loadDeviceId();
     _subscription = network.messageStream.listen(_onRawMessage);
   }
 
@@ -346,24 +358,26 @@ class GameStateProvider extends ChangeNotifier {
         if (!_requireMapFields(msg.payload, const ['players'])) return;
         _handleGameState(msg.payload);
         break;
+      case MessageType.playerAssignment:
+        if (!_requireMapFields(msg.payload, const ['faction'])) return;
+        _handlePlayerAssignment(msg.payload);
+        break;
       case MessageType.turnUpdate:
-        if (!_requireMapFields(msg.payload, const ['active_faction'])) return;
+        if (!_requireAnyMapFields(msg.payload, const ['active_faction', 'active_device_id'])) {
+          return;
+        }
         _handleTurnUpdate(msg.payload);
         break;
       case MessageType.moveResult:
-        if (!_requireMapFields(msg.payload, const [
-          'faction',
-          'spaces_moved',
-        ])) {
+        if (!_requireMapFields(msg.payload, const ['spaces_moved']) ||
+            !_requireAnyMapFields(msg.payload, const ['faction', 'device_id'])) {
           return;
         }
         _handleMoveResult(msg.payload);
         break;
       case MessageType.cardResolved:
-        if (!_requireMapFields(msg.payload, const [
-          'card_title',
-          'target_faction',
-        ])) {
+        if (!_requireMapFields(msg.payload, const ['card_title']) ||
+            !_requireAnyMapFields(msg.payload, const ['target_faction', 'target_device_id'])) {
           return;
         }
         _handleCardResolved(msg.payload);
@@ -424,7 +438,10 @@ class GameStateProvider extends ChangeNotifier {
 
   void _handleSyncState(Map<String, dynamic> payload) {
     if (payload['my_faction'] != null) {
-      _faction = _parseFaction(payload['my_faction']);
+      final parsedFaction = _parseFaction(payload['my_faction']);
+      if (parsedFaction != null) {
+        _faction = parsedFaction;
+      }
     }
     if (payload['current_turn_faction'] != null) {
       _currentTurnFaction = _parseFaction(payload['current_turn_faction']);
@@ -435,6 +452,23 @@ class GameStateProvider extends ChangeNotifier {
     _restorePendingPrompt(payload['pending_prompt']);
 
     _addLog('Full state synced.', severity: 'success');
+  }
+
+  void _handlePlayerAssignment(Map<String, dynamic> payload) {
+    final parsedFaction = _parseFaction(payload['faction']);
+    if (parsedFaction == null) {
+      _addLog('Received unknown faction assignment', severity: 'error');
+      notifyListeners();
+      return;
+    }
+
+    _faction = parsedFaction;
+    final deviceId = payload['device_id']?.toString();
+    final assignmentText = deviceId == null
+        ? _faction!.displayName
+        : '${_faction!.displayName} for $deviceId';
+    _addLog('Faction assigned: $assignmentText', severity: 'success');
+    notifyListeners();
   }
 
   void _handleGameState(Map<String, dynamic> payload) {
@@ -448,13 +482,16 @@ class GameStateProvider extends ChangeNotifier {
           .map(
             (p) => PlayerData.fromMap(
               p as Map<String, dynamic>,
-              FactionType.natural,
+              _faction ?? FactionType.natural,
             ),
           )
           .toList();
 
       // Update my own metrics from the allPlayers list
       try {
+        if (_faction == null) {
+          throw StateError('Faction not assigned yet');
+        }
         final myData = _allPlayers.firstWhere((p) => p.faction == _faction);
         _metrics = myData.metrics;
         _bankBalance = myData.bankBalance;
@@ -469,18 +506,33 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   void _handleTurnUpdate(Map<String, dynamic> payload) {
-    if (payload['active_faction'] != null) {
-      _currentTurnFaction = _parseFaction(payload['active_faction']);
-      _addLog(
-        'Turn updated to ${_currentTurnFaction?.displayName ?? "Unknown"}',
-        severity: 'info',
-      );
+    final parsedFaction = _resolveFaction(
+      factionValue: payload['active_faction'],
+      deviceIdValue: payload['active_device_id'],
+    );
+    if (parsedFaction == null) {
+      _addLog('Turn update contained unknown player reference', severity: 'error');
       notifyListeners();
+      return;
     }
+    _currentTurnFaction = parsedFaction;
+    _addLog(
+      'Turn updated to ${_currentTurnFaction?.displayName ?? "Unknown"}',
+      severity: 'info',
+    );
+    notifyListeners();
   }
 
   void _handleMoveResult(Map<String, dynamic> payload) {
-    final f = _parseFaction(payload['faction']);
+    final f = _resolveFaction(
+      factionValue: payload['faction'],
+      deviceIdValue: payload['device_id'],
+    );
+    if (f == null) {
+      _addLog('Move result contained unknown player reference', severity: 'error');
+      notifyListeners();
+      return;
+    }
     final spaces = payload['spaces_moved'];
     _addLog('${f.displayName} moved $spaces spaces', severity: 'info');
     notifyListeners();
@@ -489,7 +541,15 @@ class GameStateProvider extends ChangeNotifier {
   void _handleCardResolved(Map<String, dynamic> payload) {
     _isPromptingScan = false;
     final title = payload['card_title'];
-    final target = _parseFaction(payload['target_faction']);
+    final target = _resolveFaction(
+      factionValue: payload['target_faction'],
+      deviceIdValue: payload['target_device_id'],
+    );
+    if (target == null) {
+      _addLog('Card resolution contained unknown target player reference', severity: 'error');
+      notifyListeners();
+      return;
+    }
     final impact = payload['impact_level'];
     _addLog(
       '$title ($impact impact) resolved on ${target.displayName}',
@@ -526,7 +586,7 @@ class GameStateProvider extends ChangeNotifier {
   void sendPurchaseResponse(bool buy) {
     final msg = ProtocolMessage(
       type: MessageType.actionPurchase,
-      payload: {'action': buy ? 'buy' : 'skip'},
+      payload: _withActorDeviceId({'action': buy ? 'buy' : 'skip'}),
     );
     network.sendMessage(msg.toJsonString());
     _pendingPurchase = null;
@@ -538,7 +598,10 @@ class GameStateProvider extends ChangeNotifier {
   void sendCardDecisionResponse(String choice) {
     final msg = ProtocolMessage(
       type: MessageType.actionCardChoice,
-      payload: {'card_id': _pendingDecision?.cardId ?? '', 'choice': choice},
+      payload: _withActorDeviceId({
+        'card_id': _pendingDecision?.cardId ?? '',
+        'choice': choice,
+      }),
     );
     network.sendMessage(msg.toJsonString());
     _pendingDecision = null;
@@ -557,6 +620,21 @@ class GameStateProvider extends ChangeNotifier {
       case FactionType.technological:
         return 'Technological';
     }
+  }
+
+  Map<String, dynamic> transferFundsPayload({
+    required FactionType targetFaction,
+    required int amount,
+    String? targetDeviceId,
+  }) {
+    final payload = <String, dynamic>{
+      'amount': amount,
+      'target_faction': factionToProtocolValue(targetFaction),
+    };
+    if (targetDeviceId != null && targetDeviceId.isNotEmpty) {
+      payload['target_device_id'] = targetDeviceId;
+    }
+    return _withActorDeviceId(payload);
   }
 
   // -------------------------------------------------------
@@ -656,6 +734,17 @@ class GameStateProvider extends ChangeNotifier {
     logger.i('[GameLog] $message');
   }
 
+  Future<void> _loadDeviceId() async {
+    _deviceId = await DeviceIdentity.getDeviceId();
+  }
+
+  Map<String, dynamic> _withActorDeviceId(Map<String, dynamic> payload) {
+    if (_deviceId == null || _deviceId!.isEmpty) {
+      return payload;
+    }
+    return {'device_id': _deviceId!, ...payload};
+  }
+
   bool _requireMapFields(
     Map<String, dynamic> payload,
     List<String> requiredKeys,
@@ -671,6 +760,23 @@ class GameStateProvider extends ChangeNotifier {
       }
     }
     return true;
+  }
+
+  bool _requireAnyMapFields(
+    Map<String, dynamic> payload,
+    List<String> candidateKeys,
+  ) {
+    for (final key in candidateKeys) {
+      if (payload.containsKey(key)) {
+        return true;
+      }
+    }
+    _addLog(
+      'Malformed payload for message: expected one of ${candidateKeys.join(", ")}',
+      severity: 'error',
+    );
+    notifyListeners();
+    return false;
   }
 
   void _restorePendingPrompt(dynamic pendingPrompt) {
@@ -708,7 +814,7 @@ class GameStateProvider extends ChangeNotifier {
     }
   }
 
-  FactionType _parseFaction(dynamic value) {
+  FactionType? _parseFaction(dynamic value) {
     final s = value.toString().toLowerCase();
 
     if (s.contains('natural')) {
@@ -727,7 +833,27 @@ class GameStateProvider extends ChangeNotifier {
       return FactionType.technological;
     }
 
-    return _faction; // Keep current if unrecognized
+    return null;
+  }
+
+  FactionType? _resolveFaction({dynamic factionValue, dynamic deviceIdValue}) {
+    final fromFaction = _parseFaction(factionValue);
+    if (fromFaction != null) {
+      return fromFaction;
+    }
+
+    final deviceId = deviceIdValue?.toString();
+    if (deviceId == null || deviceId.isEmpty) {
+      return null;
+    }
+
+    for (final player in _allPlayers) {
+      if (player.deviceId == deviceId) {
+        return player.faction;
+      }
+    }
+
+    return null;
   }
 
   @override

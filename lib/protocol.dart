@@ -19,6 +19,7 @@ enum MessageType {
 
   // Server Truths (ESP32 -> App)
   lobbyState,
+  playerAssignment,
   gameStart,
   fullSync,
   turnUpdate,
@@ -56,6 +57,7 @@ class ProtocolMessage {
     'action_card_choice': MessageType.actionCardChoice,
     'action_transfer_funds': MessageType.actionTransferFunds,
     'lobby_state': MessageType.lobbyState,
+    'player_assignment': MessageType.playerAssignment,
     'game_start': MessageType.gameStart,
     'full_sync': MessageType.fullSync,
     'turn_update': MessageType.turnUpdate,
@@ -80,6 +82,7 @@ class ProtocolMessage {
     MessageType.actionCardChoice: 'action_card_choice',
     MessageType.actionTransferFunds: 'action_transfer_funds',
     MessageType.lobbyState: 'lobby_state',
+    MessageType.playerAssignment: 'player_assignment',
     MessageType.gameStart: 'game_start',
     MessageType.fullSync: 'full_sync',
     MessageType.turnUpdate: 'turn_update',

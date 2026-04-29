@@ -27,10 +27,11 @@ class _TradeDrawerState extends State<TradeDrawer> {
 
     final msg = ProtocolMessage(
       type: MessageType.actionTransferFunds,
-      payload: {
-        'target_faction': gs.factionToProtocolValue(selected.faction),
-        'amount': amount,
-      },
+      payload: gs.transferFundsPayload(
+        targetFaction: selected.faction,
+        targetDeviceId: selected.deviceId,
+        amount: amount,
+      ),
     );
     
     gs.network.sendMessage(msg.toJsonString());

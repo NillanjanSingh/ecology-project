@@ -25,15 +25,22 @@ void main() {
       expect(
         ProtocolMessage(
           type: MessageType.setReady,
-          payload: {'ready': true},
+          payload: {'device_id': 'abc', 'ready': true},
         ).toJsonString(),
         contains('"type":"set_ready"'),
+      );
+      expect(
+        ProtocolMessage(
+          type: MessageType.setReady,
+          payload: {'device_id': 'abc', 'ready': true},
+        ).toJsonString(),
+        contains('"device_id":"abc"'),
       );
 
       expect(
         ProtocolMessage(
           type: MessageType.actionPurchase,
-          payload: {'action': 'buy'},
+          payload: {'device_id': 'abc', 'action': 'buy'},
         ).toJsonString(),
         contains('"type":"action_purchase"'),
       );
@@ -41,7 +48,7 @@ void main() {
       expect(
         ProtocolMessage(
           type: MessageType.actionCardChoice,
-          payload: {'choice': 'A'},
+          payload: {'device_id': 'abc', 'choice': 'A'},
         ).toJsonString(),
         contains('"type":"action_card_choice"'),
       );
@@ -49,7 +56,12 @@ void main() {
       expect(
         ProtocolMessage(
           type: MessageType.actionTransferFunds,
-          payload: {'target_faction': 'Natural', 'amount': 20},
+          payload: {
+            'device_id': 'abc',
+            'target_device_id': 'def',
+            'target_faction': 'Natural',
+            'amount': 20,
+          },
         ).toJsonString(),
         contains('"type":"action_transfer_funds"'),
       );
@@ -58,6 +70,7 @@ void main() {
     test('decodes documented server truths', () {
       final samples = <String, MessageType>{
         'lobby_state': MessageType.lobbyState,
+        'player_assignment': MessageType.playerAssignment,
         'game_start': MessageType.gameStart,
         'full_sync': MessageType.fullSync,
         'turn_update': MessageType.turnUpdate,

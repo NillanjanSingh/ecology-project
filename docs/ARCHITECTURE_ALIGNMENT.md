@@ -24,6 +24,7 @@ Only the documented types are part of production contract.
 
 ### Server → Client
 - `lobby_state`
+- `player_assignment`
 - `game_start`
 - `full_sync`
 - `turn_update`
@@ -46,6 +47,12 @@ On-wire faction names must match protocol exactly:
 - `Technological`
 
 App-internal enums may differ, but serialization/deserialization must map to these values.
+
+The app must not assume a default faction before server confirmation. The authoritative faction source is:
+- `player_assignment.faction` during lobby/ready flow
+- `full_sync.my_faction` during reconnect
+
+`device_id` is the authoritative player key. Client intents that identify the acting player must include `device_id`, and player-targeting intents should include a target `device_id` whenever the ESP32 has already exposed it in lobby or game state.
 
 ## 4. Economy and Tile Rules
 - Infrastructure `Budget` values are the economy cost.

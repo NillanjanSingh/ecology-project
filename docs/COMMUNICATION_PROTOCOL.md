@@ -54,10 +54,13 @@ Sent when the player taps "Ready" in the lobby.
 {
   "type": "set_ready",
   "payload": {
+    "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "ready": true
   }
 }
 ```
+
+After the ESP32 accepts this ready signal, it should respond directly to that same device with `player_assignment` so the app can bind the UUID to the assigned faction before the game starts.
 
 ### `action_purchase`
 Response to a `prompt_purchase` from the ESP32.
@@ -65,6 +68,7 @@ Response to a `prompt_purchase` from the ESP32.
 {
   "type": "action_purchase",
   "payload": {
+    "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "infrastructure_name": "Solar Power Plant",
     "action": "provider" // or "taker" or "skip"
   }
@@ -77,6 +81,7 @@ Response to a `prompt_card_choice` (e.g., choosing between Policy A or B).
 {
   "type": "action_card_choice",
   "payload": {
+    "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "choice": "A" // or "B"
   }
 }
@@ -88,11 +93,15 @@ Sent asynchronously when a player wants to trade/send points to another city.
 {
   "type": "action_transfer_funds",
   "payload": {
+    "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "target_device_id": "0f9e8d7c-6b5a-4321-aaaa-bbccccddeeff",
     "target_faction": "Natural",
     "amount": 20
   }
 }
 ```
+
+`target_device_id` should be treated as the authoritative transfer target. `target_faction` is retained as a readable fallback and audit field.
 
 ---
 
@@ -108,10 +117,23 @@ Broadcasted whenever someone joins or changes ready status.
     "total_connected": 3,
     "ready_count": 2,
     "players": [
-      { "faction": "Natural", "is_ready": true },
-      { "faction": "Technological", "is_ready": true },
-      { "faction": "Manufacturing", "is_ready": false }
+      { "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "faction": "Natural", "is_ready": true },
+      { "device_id": "0f9e8d7c-6b5a-4321-aaaa-bbccccddeeff", "faction": "Technological", "is_ready": true },
+      { "device_id": "11223344-5566-7788-99aa-bbccddeeff00", "faction": "Manufacturing", "is_ready": false }
     ]
+  }
+}
+```
+
+### `player_assignment`
+Sent directly to one phone after the ESP32 confirms that device's ready state and faction assignment. This is the first authoritative faction confirmation for the app.
+```json
+{
+  "type": "player_assignment",
+  "payload": {
+    "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "faction": "Technological",
+    "ready_confirmed": true
   }
 }
 ```
@@ -131,7 +153,8 @@ Broadcasted when the turn passes to a new player.
 {
   "type": "turn_update",
   "payload": {
-    "active_faction": "Technological"
+    "active_faction": "Technological",
+    "active_device_id": "0f9e8d7c-6b5a-4321-aaaa-bbccccddeeff"
   }
 }
 ```
@@ -143,6 +166,7 @@ Broadcasted after the ESP32 reads the rotary encoder and resolves physical movem
   "type": "move_result",
   "payload": {
     "faction": "Technological",
+    "device_id": "0f9e8d7c-6b5a-4321-aaaa-bbccccddeeff",
     "spaces_moved": 4,
     "landed_on_tile_type": "infrastructure" // e.g., "policy", "disaster", "infrastructure"
   }
@@ -257,6 +281,7 @@ Broadcasted when a forced card from `Disaster` or `Event-2` is resolved. The ESP
     "category": "Disaster",
     "card_title": "Flood",
     "target_faction": "Manufacturing",
+    "target_device_id": "11223344-5566-7788-99aa-bbccddeeff00",
     "selected_outcome": "Standing Water",
     "severity_basis": {
       "sustainability": 32,
@@ -310,6 +335,7 @@ The master state payload. Broadcasted after ANY mathematical change (metrics, po
     "base_balance": 60,
     "players": [
       {
+        "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         "faction": "Natural",
         "is_eliminated": false,
         "bank_balance": 1500,
@@ -374,12 +400,15 @@ Notes:
 
 Valid faction values in all payloads are `Natural`, `Manufacturing`, `Tourism`, and `Technological`.
 
+`device_id` is the authoritative unique player identifier. Any message that references a specific player should include that player's `device_id` whenever possible, even if a faction label is also present for readability.
+
 ### `full_sync`
 Sent ONLY in response to a `reconnect` message from a crashed app.
 ```json
 {
   "type": "full_sync",
   "payload": {
+    "my_device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "my_faction": "Natural",
     "current_turn_faction": "Technological",
     "game_state": {

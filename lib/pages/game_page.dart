@@ -99,7 +99,6 @@ class _GamePageState extends State<GamePage> {
           }
         });
 
-        final faction = gs.faction;
         final metrics = gs.metrics;
         final progress =
             (metrics.totalScore / GameStateProvider.ascensionTarget).clamp(
@@ -116,7 +115,7 @@ class _GamePageState extends State<GamePage> {
                 child: Column(
                   children: [
                     // ─── Header ───
-                    _buildHeader(context, faction, gs.bankBalance, gs.currentLap),
+                    _buildHeader(context, gs, gs.bankBalance, gs.currentLap),
                     // ─── Turn Indicator ───
                     _buildTurnIndicator(gs),
                     // ─── Ascension Progress ───
@@ -127,7 +126,7 @@ class _GamePageState extends State<GamePage> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         child: Column(
                           children: [
-                            MetricsRadarChart(metrics: metrics, faction: faction),
+                            MetricsRadarChart(metrics: metrics, faction: gs.faction),
                             const SizedBox(height: 20),
                             StatusLog(
                               activeCards: gs.activeCards,
@@ -255,15 +254,20 @@ class _GamePageState extends State<GamePage> {
   // Header
   // ─────────────────────────────────────────────
 
-  Widget _buildHeader(BuildContext context, FactionType faction, int bank, int lap) {
+  Widget _buildHeader(
+    BuildContext context,
+    GameStateProvider gs,
+    int bank,
+    int lap,
+  ) {
     return Builder(
       builder: (context) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
-            color: faction.color.withValues(alpha: 0.08),
+            color: gs.factionColor.withValues(alpha: 0.08),
             border: Border(
-              bottom: BorderSide(color: faction.color.withValues(alpha: 0.2)),
+              bottom: BorderSide(color: gs.factionColor.withValues(alpha: 0.2)),
             ),
           ),
           child: Row(
@@ -272,10 +276,10 @@ class _GamePageState extends State<GamePage> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: faction.color.withValues(alpha: 0.2),
+                  color: gs.factionColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(faction.icon, color: faction.color, size: 24),
+                child: Icon(gs.factionIcon, color: gs.factionColor, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -293,11 +297,11 @@ class _GamePageState extends State<GamePage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      faction.displayName,
+                      gs.factionLabel,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: faction.color,
+                        color: gs.factionColor,
                       ),
                     ),
                   ],
@@ -369,12 +373,15 @@ class _GamePageState extends State<GamePage> {
   Widget _buildTurnIndicator(GameStateProvider gs) {
     if (gs.currentTurnFaction == null) return const SizedBox.shrink();
 
-    final isMyTurn = gs.currentTurnFaction == gs.faction;
+    final isMyTurn = gs.hasAssignedFaction && gs.currentTurnFaction == gs.faction;
+    final bannerColor = isMyTurn
+        ? gs.factionColor.withValues(alpha: 0.8)
+        : Colors.black45;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      color: isMyTurn ? gs.faction.color.withValues(alpha: 0.8) : Colors.black45,
+      color: bannerColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -387,7 +394,9 @@ class _GamePageState extends State<GamePage> {
           Text(
             isMyTurn 
                 ? "IT's YOUR TURN! Spin the encoder." 
-                : "Waiting for ${gs.currentTurnFaction!.displayName}...",
+                : gs.hasAssignedFaction
+                ? "Waiting for ${gs.currentTurnFaction!.displayName}..."
+                : "Faction pending. Waiting for ${gs.currentTurnFaction!.displayName}...",
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
