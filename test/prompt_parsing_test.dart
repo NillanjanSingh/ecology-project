@@ -35,5 +35,23 @@ void main() {
       expect(prompt.takerCost, 25);
       expect(prompt.effects['sustainability'], 8);
     });
+
+    test('PlayerData parses legacy keys and numeric faction ids', () {
+      final p = PlayerData.fromMap({
+        'faction': 3,
+        'bankBalance': 1450.0,
+        'isEliminated': false,
+        'factors': {
+          'sustainability': 11,
+          'smart': 12,
+          'livability': 13,
+          'economy': 14,
+        },
+      }, FactionType.natural);
+
+      expect(p.faction, FactionType.technological);
+      expect(p.bankBalance, 1450);
+      expect(p.metrics.smart, 12);
+    });
   });
 }

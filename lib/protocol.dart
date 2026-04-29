@@ -110,14 +110,14 @@ class ProtocolMessage {
     try {
       final Map<String, dynamic> data = jsonDecode(jsonString);
       final String typeStr = data['type'] ?? 'unknown';
-      final payload = data['payload'] ?? {};
+      final dynamic rawPayload = data['payload'];
+      final Map<String, dynamic> payload = rawPayload is Map<String, dynamic>
+          ? rawPayload
+          : Map<String, dynamic>.from(data)..remove('type');
 
       final MessageType type = _typeFromString[typeStr] ?? MessageType.unknown;
 
-      return ProtocolMessage(
-        type: type,
-        payload: payload as Map<String, dynamic>,
-      );
+      return ProtocolMessage(type: type, payload: payload);
     } catch (e) {
       logger.e("Failed to parse message: $e");
       return ProtocolMessage(type: MessageType.unknown, payload: {});

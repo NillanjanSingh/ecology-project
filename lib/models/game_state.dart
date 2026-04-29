@@ -73,14 +73,33 @@ class PlayerData {
     Map<String, dynamic> map,
     FactionType defaultFaction,
   ) {
+    final metricsPayload =
+        map['metrics'] as Map<String, dynamic>? ??
+        map['factors'] as Map<String, dynamic>? ??
+        const <String, dynamic>{};
+    final bank =
+        _asInt(map['bank_balance']) ??
+        _asInt(map['bankBalance']) ??
+        _asInt(map['balance']) ??
+        0;
+    final eliminated =
+        map['is_eliminated'] == true || map['isEliminated'] == true;
+
     return PlayerData(
       deviceId: map['device_id']?.toString(),
       faction: _parseFactionStatic(map['faction']) ?? defaultFaction,
-      isEliminated: map['is_eliminated'] == true,
-      bankBalance: map['bank_balance'] ?? 0,
-      metrics: PlayerMetrics.fromMap(map['metrics'] ?? {}),
+      isEliminated: eliminated,
+      bankBalance: bank,
+      metrics: PlayerMetrics.fromMap(metricsPayload),
       ownedItems: _parseOwnedItems(map),
     );
+  }
+
+  static int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
   static List<String> _parseOwnedItems(Map<String, dynamic> map) {
@@ -111,8 +130,24 @@ class PlayerData {
   }
 
   static FactionType? _parseFactionStatic(dynamic value) {
+    if (value is int) {
+      switch (value) {
+        case 0:
+          return FactionType.natural;
+        case 1:
+          return FactionType.manufacturing;
+        case 2:
+          return FactionType.tourism;
+        case 3:
+          return FactionType.technological;
+      }
+    }
     final s = value?.toString().toLowerCase() ?? '';
     if (s.contains('natural')) return FactionType.natural;
+    if (s.contains('software') || s.contains('industrial')) {
+      return FactionType.manufacturing;
+    }
+    if (s.contains('financial')) return FactionType.tourism;
     if (s.contains('manufact')) return FactionType.manufacturing;
     if (s.contains('tour')) return FactionType.tourism;
     if (s.contains('technological')) {
@@ -443,8 +478,7 @@ class GameStateProvider extends ChangeNotifier {
         _handleSyncState(msg.payload);
         break;
       case MessageType.gameState:
-        if (!_requireMapFields(msg.payload, const ['players'])) return;
-        _handleGameState(msg.payload);
+        _handleGameState(_normalizeGameStatePayload(msg.payload));
         break;
       case MessageType.playerAssignment:
         if (!_requireMapFields(msg.payload, const ['faction'])) return;
@@ -598,6 +632,14 @@ class GameStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Map<String, dynamic> _normalizeGameStatePayload(Map<String, dynamic> payload) {
+    final nested = payload['game_state'];
+    if (nested is Map<String, dynamic>) {
+      return nested;
+    }
+    return payload;
+  }
+
   void _handleTurnUpdate(Map<String, dynamic> payload) {
     final parsedFaction = _resolveFaction(
       factionValue: payload['active_faction'],
@@ -736,13 +778,12 @@ class GameStateProvider extends ChangeNotifier {
   void sendCardDecisionResponse(String choice) {
     final msg = ProtocolMessage(
       type: MessageType.actionCardChoice,
-      payload: _withActorDeviceId({
-        'card_id': _pendingDecision?.cardId ?? '',
-        'choice': choice,
-      }),
+      payload: _withActorDeviceId({'choice': choice}),
     );
     network.sendMessage(msg.toJsonString());
     _pendingDecision = null;
+    _isPromptingScan = false;
+    _scanPromptMessage = null;
     _addLog('Choice made: $choice', severity: 'success');
     notifyListeners();
   }
@@ -965,6 +1006,18 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   FactionType? _parseFaction(dynamic value) {
+    if (value is int) {
+      switch (value) {
+        case 0:
+          return FactionType.natural;
+        case 1:
+          return FactionType.manufacturing;
+        case 2:
+          return FactionType.tourism;
+        case 3:
+          return FactionType.technological;
+      }
+    }
     final s = value.toString().toLowerCase();
 
     if (s.contains('natural')) {
@@ -975,7 +1028,15 @@ class GameStateProvider extends ChangeNotifier {
       return FactionType.manufacturing;
     }
 
+    if (s.contains('software') || s.contains('industrial')) {
+      return FactionType.manufacturing;
+    }
+
     if (s.contains('tour')) {
+      return FactionType.tourism;
+    }
+
+    if (s.contains('financial')) {
       return FactionType.tourism;
     }
 

@@ -23,106 +23,116 @@ class CardDecisionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 400),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A2332), Color(0xFF0D1520)],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF2A3A4E), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
-              blurRadius: 30,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 400,
+              maxHeight: constraints.maxHeight * 0.9,
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFA726).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1A2332), Color(0xFF0D1520)],
                 ),
-                child: const Icon(
-                  Icons.gavel_rounded,
-                  color: Color(0xFFFFA726),
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'DECISION REQUIRED',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
-                  color: Color(0xFFFFA726),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                cardTitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              if (description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF2A3A4E), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 30,
                   ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFA726).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.gavel_rounded,
+                        color: Color(0xFFFFA726),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'DECISION REQUIRED',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2,
+                        color: Color(0xFFFFA726),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      cardTitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        description,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    _choiceCard(
+                      label: 'A',
+                      title: choiceA,
+                      desc: choiceADescription,
+                      color: const Color(0xFF42A5F5),
+                      onTap: () => onChoiceSelected('A'),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        '— OR —',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.3),
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _choiceCard(
+                      label: 'B',
+                      title: choiceB,
+                      desc: choiceBDescription,
+                      color: const Color(0xFFAB47BC),
+                      onTap: () => onChoiceSelected('B'),
+                    ),
+                  ],
                 ),
-              ],
-              const SizedBox(height: 24),
-              _choiceCard(
-                label: 'A',
-                title: choiceA,
-                desc: choiceADescription,
-                color: const Color(0xFF42A5F5),
-                onTap: () => onChoiceSelected('A'),
               ),
-              const SizedBox(height: 12),
-              Center(
-                child: Text(
-                  '— OR —',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.3),
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _choiceCard(
-                label: 'B',
-                title: choiceB,
-                desc: choiceBDescription,
-                color: const Color(0xFFAB47BC),
-                onTap: () => onChoiceSelected('B'),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

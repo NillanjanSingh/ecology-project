@@ -118,5 +118,18 @@ void main() {
         expect(msg.type, MessageType.unknown, reason: 'legacy type $type');
       }
     });
+
+    test('parses payload when envelope payload key is missing', () {
+      final msg = ProtocolMessage.fromJsonString(
+        jsonEncode({
+          'type': 'game_state',
+          'players': [
+            {'faction': 0, 'bankBalance': 1200}
+          ],
+        }),
+      );
+      expect(msg.type, MessageType.gameState);
+      expect(msg.payload.containsKey('players'), isTrue);
+    });
   });
 }
