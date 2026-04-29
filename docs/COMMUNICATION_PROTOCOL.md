@@ -110,7 +110,8 @@ Sent when a player opens the Ownership panel (or taps refresh) to request curren
   "type": "action_view_ownership",
   "payload": {
     "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "scope": "all"
+    "scope": "all",
+    "include_game_state": true
   }
 }
 ```
@@ -118,6 +119,10 @@ Sent when a player opens the Ownership panel (or taps refresh) to request curren
 `scope` values:
 - `all`: return all players and their owned items
 - `self`: return only requesting player ownership
+
+`include_game_state`:
+- Optional boolean.
+- When `true`, ESP32 should include up-to-date economy/metric fields in the ownership response or immediately follow with a `game_state` broadcast.
 
 ---
 
@@ -442,6 +447,13 @@ Sent as a response to `action_view_ownership`. Can also be broadcast by ESP32 af
       {
         "device_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         "faction": "Natural",
+        "bank_balance": 1500,
+        "metrics": {
+          "sustainability": 650.0,
+          "smart": 500.0,
+          "livability": 720.0,
+          "economy": 580.0
+        },
         "owned_items": [
           "Solar Power Plant",
           "Desalination Plant"
@@ -450,6 +462,13 @@ Sent as a response to `action_view_ownership`. Can also be broadcast by ESP32 af
       {
         "device_id": "0f9e8d7c-6b5a-4321-aaaa-bbccccddeeff",
         "faction": "Technological",
+        "bank_balance": 1200,
+        "metrics": {
+          "sustainability": 500.0,
+          "smart": 650.0,
+          "livability": 520.0,
+          "economy": 600.0
+        },
         "owned_items": [
           "Data Center"
         ]
@@ -458,6 +477,12 @@ Sent as a response to `action_view_ownership`. Can also be broadcast by ESP32 af
   }
 }
 ```
+
+Refresh behavior requirement:
+- If app sends `action_view_ownership` with `include_game_state = true`, ESP32 must do one of:
+  - include fresh `bank_balance` and `metrics` fields for each player in `ownership_state.players[]`, or
+  - immediately broadcast a full `game_state` after `ownership_state`.
+- This is required so purchase eligibility (provider/taker affordability) updates correctly in the active purchase dialog.
 
 ### `full_sync`
 Sent ONLY in response to a `reconnect` message from a crashed app.

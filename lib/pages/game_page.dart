@@ -7,6 +7,7 @@ import '../widgets/status_log.dart';
 import '../widgets/modals/purchase_dialog.dart';
 import '../widgets/modals/card_decision_dialog.dart';
 import '../widgets/trade_drawer.dart';
+import 'game_over_page.dart';
 
 /// The Mayor's Terminal — main game dashboard.
 ///
@@ -29,6 +30,7 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   String _networkStatus = "Connected";
+  bool _navigatedToGameOver = false;
 
   @override
   void initState() {
@@ -103,6 +105,15 @@ class _GamePageState extends State<GamePage> {
       builder: (context, gs, _) {
         // Auto-show modals when prompts arrive
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_navigatedToGameOver && gs.gamePhase == 'ended') {
+            _navigatedToGameOver = true;
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => GameOverPage(players: gs.allPlayers),
+              ),
+            );
+            return;
+          }
           if (gs.pendingPurchase != null && !_isPurchaseDialogOpen) {
             _showPurchaseDialog(context, gs);
           } else if (gs.pendingPurchase == null && _isPurchaseDialogOpen) {
@@ -284,6 +295,7 @@ class _GamePageState extends State<GamePage> {
     int bank,
     int lap,
   ) {
+    final isDeveloped = gs.myPlayerData?.isInnerRing == true;
     return Builder(
       builder: (context) {
         return Container(
@@ -328,6 +340,31 @@ class _GamePageState extends State<GamePage> {
                         color: gs.factionColor,
                       ),
                     ),
+                    if (isDeveloped) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD54F).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFFFFD54F).withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: const Text(
+                          'DEVELOPED CITY',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
+                            color: Color(0xFFFFD54F),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

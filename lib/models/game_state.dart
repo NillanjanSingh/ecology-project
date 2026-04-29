@@ -56,6 +56,7 @@ class PlayerData {
   final String? deviceId;
   final FactionType faction;
   final bool isEliminated;
+  final bool isInnerRing;
   final int bankBalance;
   final PlayerMetrics metrics;
   final List<String> ownedItems;
@@ -64,6 +65,7 @@ class PlayerData {
     this.deviceId,
     required this.faction,
     required this.isEliminated,
+    required this.isInnerRing,
     required this.bankBalance,
     required this.metrics,
     this.ownedItems = const [],
@@ -84,11 +86,14 @@ class PlayerData {
         0;
     final eliminated =
         map['is_eliminated'] == true || map['isEliminated'] == true;
+    final innerRing =
+        map['is_inner_ring'] == true || map['isInnerRing'] == true;
 
     return PlayerData(
       deviceId: map['device_id']?.toString(),
       faction: _parseFactionStatic(map['faction']) ?? defaultFaction,
       isEliminated: eliminated,
+      isInnerRing: innerRing,
       bankBalance: bank,
       metrics: PlayerMetrics.fromMap(metricsPayload),
       ownedItems: _parseOwnedItems(map),
@@ -650,18 +655,7 @@ class GameStateProvider extends ChangeNotifier {
           )
           .toList();
 
-      // Update my own metrics from the allPlayers list
-      try {
-        if (_faction == null) {
-          throw StateError('Faction not assigned yet');
-        }
-        final myData = _allPlayers.firstWhere((p) => p.faction == _faction);
-        _metrics = myData.metrics;
-        _bankBalance = myData.bankBalance;
-        _isEliminated = myData.isEliminated;
-      } catch (e) {
-        // I might not be in the list yet
-      }
+      _syncMyDerivedStateFromPlayers();
     }
 
     _addLog('Game state updated: $_gamePhase', severity: 'info');
@@ -775,18 +769,19 @@ class GameStateProvider extends ChangeNotifier {
           if (existing.deviceId != null &&
               existing.deviceId!.isNotEmpty &&
               candidate.deviceId == existing.deviceId) {
-            return candidate;
+            return _mergePlayerData(existing, candidate);
           }
         }
         for (final candidate in updatedPlayers) {
           if (candidate.faction == existing.faction) {
-            return candidate;
+            return _mergePlayerData(existing, candidate);
           }
         }
         return existing;
       }).toList();
     }
 
+    _syncMyDerivedStateFromPlayers();
     _addLog('Ownership state refreshed.', severity: 'info');
     notifyListeners();
   }
@@ -859,10 +854,16 @@ class GameStateProvider extends ChangeNotifier {
     return _withActorDeviceId(payload);
   }
 
-  void requestOwnershipState({String scope = 'all'}) {
+  void requestOwnershipState({
+    String scope = 'all',
+    bool includeGameState = true,
+  }) {
     final msg = ProtocolMessage(
       type: MessageType.actionViewOwnership,
-      payload: _withActorDeviceId({'scope': scope}),
+      payload: _withActorDeviceId({
+        'scope': scope,
+        'include_game_state': includeGameState,
+      }),
     );
     network.sendMessage(msg.toJsonString());
   }
@@ -1109,6 +1110,38 @@ class GameStateProvider extends ChangeNotifier {
     }
 
     return null;
+  }
+
+  PlayerData _mergePlayerData(PlayerData existing, PlayerData incoming) {
+    final hasBank = incoming.bankBalance > 0 || existing.bankBalance == 0;
+    final hasMetrics = incoming.metrics.totalScore > 0 ||
+        existing.metrics.totalScore == 0;
+
+    return PlayerData(
+      deviceId: incoming.deviceId ?? existing.deviceId,
+      faction: incoming.faction,
+      isEliminated: incoming.isEliminated,
+      isInnerRing: incoming.isInnerRing || existing.isInnerRing,
+      bankBalance: hasBank ? incoming.bankBalance : existing.bankBalance,
+      metrics: hasMetrics ? incoming.metrics : existing.metrics,
+      ownedItems: incoming.ownedItems.isNotEmpty
+          ? incoming.ownedItems
+          : existing.ownedItems,
+    );
+  }
+
+  void _syncMyDerivedStateFromPlayers() {
+    try {
+      if (_faction == null) {
+        throw StateError('Faction not assigned yet');
+      }
+      final myData = _allPlayers.firstWhere((p) => p.faction == _faction);
+      _metrics = myData.metrics;
+      _bankBalance = myData.bankBalance;
+      _isEliminated = myData.isEliminated;
+    } catch (_) {
+      // I might not be in the list yet
+    }
   }
 
   FactionType? _resolveFactionFromTurnPayload(Map<String, dynamic> payload) {

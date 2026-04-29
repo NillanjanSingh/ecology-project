@@ -12,12 +12,30 @@ class TradeDrawer extends StatefulWidget {
 
 class _TradeDrawerState extends State<TradeDrawer> {
   bool _showOwnership = false;
+  bool _hasRequestedInitialRefresh = false;
   PlayerData? _selectedOpponent;
   final TextEditingController _amountController = TextEditingController();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hasRequestedInitialRefresh) return;
+    _hasRequestedInitialRefresh = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<GameStateProvider>().requestOwnershipState();
+    });
+  }
 
   void _sendTrade(GameStateProvider gs) {
     if (_selectedOpponent == null) return;
     final selected = _selectedOpponent!;
+    if (selected.deviceId == null || selected.deviceId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot trade: target device ID missing.')),
+      );
+      return;
+    }
     final amount = int.tryParse(_amountController.text) ?? 0;
     if (amount <= 0 || amount > gs.bankBalance) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +118,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
                       setState(() {
                         _showOwnership = selection.first;
                       });
+                      gs.requestOwnershipState();
                     },
                   ),
                 ),
