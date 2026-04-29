@@ -40,9 +40,15 @@ class _GamePageState extends State<GamePage> {
 
   // --- Modal launchers ---
 
+  // --- Dialog state trackers ---
+  bool _isPurchaseDialogOpen = false;
+  bool _isDecisionDialogOpen = false;
+
   void _showPurchaseDialog(BuildContext ctx, GameStateProvider gs) {
     final p = gs.pendingPurchase;
-    if (p == null) return;
+    if (p == null || _isPurchaseDialogOpen) return;
+    
+    _isPurchaseDialogOpen = true;
     showDialog(
       context: ctx,
       barrierDismissible: false,
@@ -54,16 +60,19 @@ class _GamePageState extends State<GamePage> {
         currentBalance: gs.bankBalance,
         effects: p.effects,
         onAction: (action) {
+          _isPurchaseDialogOpen = false;
           gs.sendPurchaseResponse(action);
           Navigator.of(ctx).pop();
         },
       ),
-    );
+    ).then((_) => _isPurchaseDialogOpen = false);
   }
 
   void _showCardDecisionDialog(BuildContext ctx, GameStateProvider gs) {
     final d = gs.pendingDecision;
-    if (d == null) return;
+    if (d == null || _isDecisionDialogOpen) return;
+    
+    _isDecisionDialogOpen = true;
     showDialog(
       context: ctx,
       barrierDismissible: false,
@@ -75,11 +84,12 @@ class _GamePageState extends State<GamePage> {
         choiceB: d.choiceB,
         choiceBDescription: d.choiceBDescription,
         onChoiceSelected: (choice) {
+          _isDecisionDialogOpen = false;
           gs.sendCardDecisionResponse(choice);
           Navigator.of(ctx).pop();
         },
       ),
-    );
+    ).then((_) => _isDecisionDialogOpen = false);
   }
 
   @override
@@ -88,11 +98,20 @@ class _GamePageState extends State<GamePage> {
       builder: (context, gs, _) {
         // Auto-show modals when prompts arrive
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (gs.pendingPurchase != null) {
+          if (gs.pendingPurchase != null && !_isPurchaseDialogOpen) {
             _showPurchaseDialog(context, gs);
+          } else if (gs.pendingPurchase == null && _isPurchaseDialogOpen) {
+             // If ESP32 cleared the prompt (e.g. via timeout), close dialog.
+            _isPurchaseDialogOpen = false;
+            Navigator.of(context, rootNavigator: true).pop();
           }
-          if (gs.pendingDecision != null) {
+
+          if (gs.pendingDecision != null && !_isDecisionDialogOpen) {
             _showCardDecisionDialog(context, gs);
+          } else if (gs.pendingDecision == null && _isDecisionDialogOpen) {
+             // If ESP32 cleared the prompt (e.g. via timeout), close dialog.
+            _isDecisionDialogOpen = false;
+            Navigator.of(context, rootNavigator: true).pop();
           }
         });
 

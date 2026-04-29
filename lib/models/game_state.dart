@@ -543,6 +543,8 @@ class GameStateProvider extends ChangeNotifier {
         break;
       case MessageType.timeoutWarning:
         _isPromptingScan = false;
+        _pendingDecision = null;
+        _pendingPurchase = null;
         _addLog(
           msg.payload['message']?.toString() ?? 'Action timed out',
           severity: 'warning',
