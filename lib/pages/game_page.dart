@@ -148,8 +148,6 @@ class _GamePageState extends State<GamePage> {
           ),
           // ─── Connection Status Bar ───
           bottomNavigationBar: _buildBottomBar(),
-          // ─── Simulation FAB (for testing) ───
-          floatingActionButton: _buildSimulationFab(gs),
         );
       },
     );
@@ -507,69 +505,6 @@ class _GamePageState extends State<GamePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // Simulation FAB (dev/testing only)
-  // ─────────────────────────────────────────────
-
-  Widget _buildSimulationFab(GameStateProvider gs) {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        switch (value) {
-          case 'sync':
-            gs.simulateSyncState();
-            break;
-          case 'purchase':
-            gs.simulatePurchasePrompt();
-            break;
-          case 'decision':
-            gs.simulateCardDecisionPrompt();
-            break;
-        }
-      },
-      itemBuilder: (_) => [
-        const PopupMenuItem(
-          value: 'sync',
-          child: ListTile(
-            leading: Icon(Icons.sync, color: Color(0xFF66BB6A)),
-            title: Text('Simulate Sync State'),
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'purchase',
-          child: ListTile(
-            leading: Icon(Icons.shopping_cart, color: Color(0xFF42A5F5)),
-            title: Text('Simulate Purchase'),
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'decision',
-          child: ListTile(
-            leading: Icon(Icons.gavel, color: Color(0xFFFFA726)),
-            title: Text('Simulate Card Decision'),
-          ),
-        ),
-      ],
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1565C0).withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(Icons.science_rounded, color: Colors.white),
       ),
     );
   }
