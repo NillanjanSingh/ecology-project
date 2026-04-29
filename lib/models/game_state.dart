@@ -766,7 +766,10 @@ class GameStateProvider extends ChangeNotifier {
   void sendPurchaseResponse(String action) {
     final msg = ProtocolMessage(
       type: MessageType.actionPurchase,
-      payload: _withActorDeviceId({'action': action}),
+      payload: _withActorDeviceId({
+        'infrastructure_name': _pendingPurchase?.infrastructureName ?? '',
+        'action': action,
+      }),
     );
     network.sendMessage(msg.toJsonString());
     _pendingPurchase = null;
