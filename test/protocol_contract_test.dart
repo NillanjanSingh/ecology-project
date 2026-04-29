@@ -40,7 +40,7 @@ void main() {
       expect(
         ProtocolMessage(
           type: MessageType.actionPurchase,
-          payload: {'device_id': 'abc', 'action': 'buy'},
+          payload: {'device_id': 'abc', 'action': 'provider'},
         ).toJsonString(),
         contains('"type":"action_purchase"'),
       );

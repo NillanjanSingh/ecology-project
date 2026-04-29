@@ -214,23 +214,44 @@ class ActiveCard {
 class PurchasePrompt {
   final String infrastructureName;
   final String description;
-  final int cost;
+  final int providerCost;
+  final int? takerCost;
   final Map<String, dynamic> effects;
 
   PurchasePrompt({
     required this.infrastructureName,
     this.description = '',
-    required this.cost,
+    required this.providerCost,
+    this.takerCost,
     this.effects = const {},
   });
 
   factory PurchasePrompt.fromMap(Map<String, dynamic> map) {
+    final providerOption = map['provider_option'] as Map<String, dynamic>?;
+    final takerOption = map['taker_option'] as Map<String, dynamic>?;
+    final providerCost =
+        _asInt(providerOption?['cost_points']) ??
+        _asInt(map['cost']) ??
+        _asInt(map['budget']) ??
+        0;
+    final takerCost =
+        _asInt(takerOption?['cost_points']) ?? _asInt(map['taker_cost']);
+    final immediateScores = map['immediate_scores'] as Map<String, dynamic>?;
+
     return PurchasePrompt(
       infrastructureName: map['name']?.toString() ?? 'Unknown',
       description: map['description']?.toString() ?? '',
-      cost: map['cost'] ?? 0,
-      effects: map['effects'] ?? {},
+      providerCost: providerCost,
+      takerCost: takerCost,
+      effects: immediateScores ?? map['effects'] ?? {},
     );
+  }
+
+  static int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }
 
@@ -255,15 +276,43 @@ class CardDecisionPrompt {
   });
 
   factory CardDecisionPrompt.fromMap(Map<String, dynamic> map) {
+    final parsedA = _parseChoice(map['choice_a']);
+    final parsedB = _parseChoice(map['choice_b']);
+
     return CardDecisionPrompt(
       cardId: map['card_id']?.toString() ?? '',
       cardTitle: map['card_title']?.toString() ?? 'Decision Required',
       description: map['description']?.toString() ?? '',
-      choiceA: map['choice_a']?.toString() ?? 'Option A',
-      choiceADescription: map['choice_a_desc']?.toString() ?? '',
-      choiceB: map['choice_b']?.toString() ?? 'Option B',
-      choiceBDescription: map['choice_b_desc']?.toString() ?? '',
+      choiceA: parsedA.$1,
+      choiceADescription: parsedA.$2,
+      choiceB: parsedB.$1,
+      choiceBDescription: parsedB.$2,
     );
+  }
+
+  static (String, String) _parseChoice(dynamic raw) {
+    if (raw is String) {
+      return (raw, '');
+    }
+    if (raw is Map<String, dynamic>) {
+      final title = raw['name']?.toString() ?? 'Option';
+      final effects = raw['effects'] as Map<String, dynamic>?;
+      if (effects == null || effects.isEmpty) {
+        return (title, raw['description']?.toString() ?? '');
+      }
+      final parts = effects.entries
+          .map((e) {
+            final v = e.value;
+            final n = v is num ? v : num.tryParse(v.toString());
+            if (n == null) return null;
+            final sign = n > 0 ? '+' : '';
+            return '$sign${n.toString()} ${e.key}';
+          })
+          .whereType<String>()
+          .toList();
+      return (title, parts.join('  •  '));
+    }
+    return ('Option', '');
   }
 }
 
@@ -672,14 +721,14 @@ class GameStateProvider extends ChangeNotifier {
   // -------------------------------------------------------
 
   /// Respond to a purchase prompt.
-  void sendPurchaseResponse(bool buy) {
+  void sendPurchaseResponse(String action) {
     final msg = ProtocolMessage(
       type: MessageType.actionPurchase,
-      payload: _withActorDeviceId({'action': buy ? 'buy' : 'skip'}),
+      payload: _withActorDeviceId({'action': action}),
     );
     network.sendMessage(msg.toJsonString());
     _pendingPurchase = null;
-    _addLog(buy ? 'Purchased!' : 'Skipped purchase.', severity: 'success');
+    _addLog('Purchase action: $action', severity: 'success');
     notifyListeners();
   }
 
@@ -794,8 +843,10 @@ class GameStateProvider extends ChangeNotifier {
         'name': 'Solar Farm',
         'description':
             'A large solar panel array. Boosts sustainability and economy.',
-        'cost': 350,
-        'effects': {'sustainability': 50, 'economy': 20},
+        'budget': 350,
+        'provider_option': {'cost_points': 350},
+        'taker_option': {'cost_points': 90},
+        'immediate_scores': {'sustainability': 50, 'economy': 20},
       },
     };
     _onRawMessage(jsonEncode(payload));
@@ -810,12 +861,14 @@ class GameStateProvider extends ChangeNotifier {
         'card_title': 'Carbon Tax Regulation',
         'description':
             'The city council proposes a new carbon tax. Choose your stance.',
-        'choice_a': 'Implement Strict Tax',
-        'choice_a_desc':
-            '+80 Sustainability, -40 Economy. Heavy penalties for polluters.',
-        'choice_b': 'Relaxed Guidelines',
-        'choice_b_desc':
-            '+20 Sustainability, +30 Economy. Voluntary compliance only.',
+        'choice_a': {
+          'name': 'Implement Strict Tax',
+          'effects': {'sustainability': 80, 'economy': -40},
+        },
+        'choice_b': {
+          'name': 'Relaxed Guidelines',
+          'effects': {'sustainability': 20, 'economy': 30},
+        },
       },
     };
     _onRawMessage(jsonEncode(payload));

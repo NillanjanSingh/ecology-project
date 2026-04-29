@@ -4,24 +4,25 @@ import 'package:flutter/material.dart';
 class PurchaseDialog extends StatelessWidget {
   final String infrastructureName;
   final String description;
-  final int cost;
+  final int providerCost;
+  final int? takerCost;
   final int currentBalance;
   final Map<String, dynamic> effects;
-  final VoidCallback onBuy;
-  final VoidCallback onSkip;
+  final ValueChanged<String> onAction;
 
   const PurchaseDialog({
     super.key,
     required this.infrastructureName,
     this.description = '',
-    required this.cost,
+    required this.providerCost,
+    this.takerCost,
     required this.currentBalance,
     this.effects = const {},
-    required this.onBuy,
-    required this.onSkip,
+    required this.onAction,
   });
 
-  bool get canAfford => currentBalance >= cost;
+  bool get canAffordProvider => currentBalance >= providerCost;
+  bool get canAffordTaker => takerCost != null && currentBalance >= takerCost!;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +106,11 @@ class PurchaseDialog extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _statColumn('COST', '¤$cost', const Color(0xFFEF5350)),
+                    _statColumn(
+                      'PROVIDER',
+                      '¤$providerCost',
+                      const Color(0xFFEF5350),
+                    ),
                     Container(
                       width: 1,
                       height: 40,
@@ -114,7 +119,7 @@ class PurchaseDialog extends StatelessWidget {
                     _statColumn(
                       'BALANCE',
                       '¤$currentBalance',
-                      canAfford
+                      canAffordProvider
                           ? const Color(0xFF66BB6A)
                           : const Color(0xFFEF5350),
                     ),
@@ -164,7 +169,7 @@ class PurchaseDialog extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: onSkip,
+                      onPressed: () => onAction('skip'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white70,
                         side: BorderSide(
@@ -187,7 +192,9 @@ class PurchaseDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: canAfford ? onBuy : null,
+                      onPressed: canAffordProvider
+                          ? () => onAction('provider')
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1565C0),
                         disabledBackgroundColor: Colors.grey.shade800,
@@ -199,7 +206,7 @@ class PurchaseDialog extends StatelessWidget {
                         elevation: 0,
                       ),
                       child: Text(
-                        canAfford ? 'BUY' : 'CAN\'T AFFORD',
+                        canAffordProvider ? 'PROVIDER' : 'CAN\'T AFFORD',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1,
@@ -209,6 +216,32 @@ class PurchaseDialog extends StatelessWidget {
                   ),
                 ],
               ),
+              if (takerCost != null) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: canAffordTaker ? () => onAction('taker') : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7CB342),
+                      disabledBackgroundColor: Colors.grey.shade800,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'TAKER (¤$takerCost)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

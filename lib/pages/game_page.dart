@@ -49,15 +49,12 @@ class _GamePageState extends State<GamePage> {
       builder: (_) => PurchaseDialog(
         infrastructureName: p.infrastructureName,
         description: p.description,
-        cost: p.cost,
+        providerCost: p.providerCost,
+        takerCost: p.takerCost,
         currentBalance: gs.bankBalance,
         effects: p.effects,
-        onBuy: () {
-          gs.sendPurchaseResponse(true);
-          Navigator.of(ctx).pop();
-        },
-        onSkip: () {
-          gs.sendPurchaseResponse(false);
+        onAction: (action) {
+          gs.sendPurchaseResponse(action);
           Navigator.of(ctx).pop();
         },
       ),
