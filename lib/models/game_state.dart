@@ -489,7 +489,15 @@ class GameStateProvider extends ChangeNotifier {
         _handleOwnershipState(msg.payload);
         break;
       case MessageType.turnUpdate:
-        if (!_requireAnyMapFields(msg.payload, const ['active_faction', 'active_device_id'])) {
+        if (!_requireAnyMapFields(msg.payload, const [
+          'active_faction',
+          'active_device_id',
+          'current_turn_faction',
+          'current_turn_device_id',
+          'faction',
+          'device_id',
+          'player',
+        ])) {
           return;
         }
         _handleTurnUpdate(msg.payload);
@@ -602,6 +610,7 @@ class GameStateProvider extends ChangeNotifier {
     _currentLap = payload['lap'] ?? _currentLap;
     _gamePhase =
         payload['game_phase'] ?? payload['status']?.toString() ?? _gamePhase;
+    _updateTurnFromPayload(payload);
 
     final playersList = payload['players'] as List<dynamic>?;
     if (playersList != null) {
@@ -641,10 +650,7 @@ class GameStateProvider extends ChangeNotifier {
   }
 
   void _handleTurnUpdate(Map<String, dynamic> payload) {
-    final parsedFaction = _resolveFaction(
-      factionValue: payload['active_faction'],
-      deviceIdValue: payload['active_device_id'],
-    );
+    final parsedFaction = _resolveFactionFromTurnPayload(payload);
     if (parsedFaction == null) {
       _addLog('Turn update contained unknown player reference', severity: 'error');
       notifyListeners();
@@ -773,6 +779,9 @@ class GameStateProvider extends ChangeNotifier {
     );
     network.sendMessage(msg.toJsonString());
     _pendingPurchase = null;
+    _isPromptingScan = false;
+    _scanPromptMessage = null;
+    _advanceTurnOptimisticallyIfNeeded();
     _addLog('Purchase action: $action', severity: 'success');
     notifyListeners();
   }
@@ -1072,6 +1081,55 @@ class GameStateProvider extends ChangeNotifier {
     }
 
     return null;
+  }
+
+  FactionType? _resolveFactionFromTurnPayload(Map<String, dynamic> payload) {
+    return _resolveFaction(
+          factionValue:
+              payload['active_faction'] ??
+              payload['current_turn_faction'] ??
+              payload['faction'],
+          deviceIdValue:
+              payload['active_device_id'] ??
+              payload['current_turn_device_id'] ??
+              payload['device_id'],
+        ) ??
+        _parseFaction(payload['player']);
+  }
+
+  void _updateTurnFromPayload(Map<String, dynamic> payload) {
+    final parsedFaction = _resolveFactionFromTurnPayload(payload);
+    if (parsedFaction != null) {
+      _currentTurnFaction = parsedFaction;
+    }
+  }
+
+  void _advanceTurnOptimisticallyIfNeeded() {
+    if (_currentTurnFaction == null || _allPlayers.isEmpty) return;
+    if (_faction == null || _currentTurnFaction != _faction) return;
+
+    final activeFactions = _allPlayers
+        .where((p) => !p.isEliminated)
+        .map((p) => p.faction)
+        .toSet();
+    if (activeFactions.length < 2) return;
+
+    const order = [
+      FactionType.natural,
+      FactionType.manufacturing,
+      FactionType.tourism,
+      FactionType.technological,
+    ];
+    final currentIndex = order.indexOf(_currentTurnFaction!);
+    if (currentIndex == -1) return;
+
+    for (var i = 1; i <= order.length; i++) {
+      final next = order[(currentIndex + i) % order.length];
+      if (activeFactions.contains(next)) {
+        _currentTurnFaction = next;
+        return;
+      }
+    }
   }
 
   @override
