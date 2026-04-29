@@ -1,0 +1,41 @@
+Category,Card Name,Option Type,Option Name,Sustainability,Smart,Livability,Economy,Emission,Happiness Index,Pollution Index (incl. AQI),Biodiversity health,Community Trust
+Policy,Carbon Tax,Choice A,Aggressive,9,8,4,3,2,4,2,7,5
+Policy,Carbon Tax,Choice B,Moderate,6,6,6,6,5,6,5,6,6
+Policy,Plastic Ban,Choice A,Immediate Ban,10,5,3,4,2,4,2,9,6
+Policy,Plastic Ban,Choice B,Phased Approach,7,6,7,6,5,7,5,7,7
+Policy,Public Transit Subsidy,Choice A,Free Rides,8,7,9,5,3,9,3,6,9
+Policy,Public Transit Subsidy,Choice B,Discounted Fares,6,6,7,7,5,7,5,5,7
+Policy,Green Energy Subsidy,Choice A,Solar Focus,9,8,7,6,2,7,2,7,8
+Policy,Green Energy Subsidy,Choice B,Wind Focus,9,8,6,6,2,6,2,6,7
+Policy,Urban Density Policy,Choice A,Build Up,8,9,6,8,4,6,5,4,6
+Policy,Urban Density Policy,Choice B,Build Out,4,6,8,7,8,8,7,3,7
+Event-1,Community Tree Planting,Choice A,City Funded,8,4,8,4,3,8,3,8,7
+Event-1,Community Tree Planting,Choice B,Volunteer Led,9,3,9,2,2,10,2,9,10
+Event-1,Clean River Restoration,Choice A,Corporate Sponsor,8,6,7,7,4,7,3,8,6
+Event-1,Clean River Restoration,Choice B,Public Initiative,9,5,8,4,3,9,2,9,9
+Event-1,Green Startup Boom,Choice A,Tax Breaks,8,9,7,9,4,7,4,6,8
+Event-1,Green Startup Boom,Choice B,Let It Be,5,6,5,6,6,5,6,5,5
+Event-1,Community Recycling Drive,Choice A,Rewards System,8,6,8,5,3,8,3,7,8
+Event-1,Community Recycling Drive,Choice B,Mandatory Fines,9,7,4,6,2,3,2,8,3
+Event-1,Eco-Tourism Promotion,Choice A,Luxury Focus,6,7,7,9,6,7,5,5,6
+Event-1,Eco-Tourism Promotion,Choice B,Backpacker Focus,7,5,6,6,5,8,4,6,7
+Disaster,Forest Fire,Outcome A,Favorable Winds,2,3,4,3,8,3,7,3,6
+Disaster,Forest Fire,Outcome B,Winds Blow Inward,1,2,1,1,10,1,10,1,4
+Disaster,Industrial Accident,Outcome A,Quick Containment,4,6,5,4,6,4,6,4,7
+Disaster,Industrial Accident,Outcome B,Widespread Contamination,1,2,1,1,10,1,10,1,2
+Disaster,Heatwave,Outcome A,The Grid Holds,4,8,5,5,7,4,6,4,8
+Disaster,Heatwave,Outcome B,Rolling Blackouts,2,3,2,2,8,2,7,3,3
+Disaster,Flood,Outcome A,Flash Flood,3,4,2,2,6,2,6,3,5
+Disaster,Flood,Outcome B,Standing Water,2,2,1,1,7,1,8,2,3
+Disaster,Drought,Outcome A,Mild Dry Spell,4,5,4,4,5,4,5,4,6
+Disaster,Drought,Outcome B,Crop Failure,1,3,1,1,6,1,6,1,3
+Event-2,Eco-Tourism Boom,Outcome A,Respectful Visitors,7,6,8,9,4,8,3,7,8
+Event-2,Eco-Tourism Boom,Outcome B,Reckless Crowds,3,4,4,8,8,4,8,3,4
+Event-2,Public Transport Adoption Surge,Outcome A,Permanent Shift,9,9,9,8,2,9,2,7,9
+Event-2,Public Transport Adoption Surge,Outcome B,Passing Fad,5,5,6,6,6,5,6,5,5
+Event-2,Wetland Regeneration Success,Outcome A,Biodiversity Explosion,10,7,8,6,1,9,1,10,9
+Event-2,Wetland Regeneration Success,Outcome B,Natural Buffer,8,6,7,5,3,7,3,8,8
+Event-2,Climate Technology Grant,Outcome A,Unrestricted Cash,6,5,6,8,5,6,5,5,6
+Event-2,Climate Technology Grant,Outcome B,Hardware Upgrade,9,10,8,7,3,8,3,7,8
+Event-2,Migratory Bird Phenomenon,Outcome A,Peaceful Stopover,9,5,9,6,2,9,2,10,8
+Event-2,Migratory Bird Phenomenon,Outcome B,Agricultural Pests,4,6,3,3,4,3,4,5,4

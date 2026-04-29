@@ -1,0 +1,25 @@
+Synergy 1: Solar Power Plant & Desalination Plant (Solar provides the massive, dedicated energy requirements needed for the desalination process).
+
+Synergy 2: Wind Farm, Smart Energy Grid, & EV Charging Network (The smart grid actively balances wind power intermittency, storing excess capacity in the EV charging network).
+
+Synergy 3: Hydroelectric Dam, Reservoir System, & Fire Control Station (Damming creates the reservoir, providing guaranteed bulk water pressure for emergency fire suppression networks).
+
+Synergy 4: Water Treatment Plant, Vertical Farming Center, & Vertical Farm (Treated wastewater supplies direct nutrients and hydration in a closed loop for indoor farming).
+
+Synergy 5: Urban Forest, Urban Cooling System, & Green Roof Initiative (Working together, these drastically compound their effects to eliminate the urban heat island effect).
+
+Synergy 6: Wetland Restoration & Eco Tourism Park (Restored wetlands act as the core attraction and natural buffer for the eco-tourism economy).
+
+Synergy 7: City Park Network, Mass Transit System, & BRT System (Transit networks are routed to connect the park network, vastly increasing accessibility and foot traffic).
+
+Synergy 8: Recycling Plant, Industrial Park, Waste-to-Energy Plant, & Carbon Capture Plant (Industrial symbiosis: Industrial waste is converted to energy, and the resulting carbon is captured locally).
+
+Synergy 9: Green Housing Complex & Biomass Power Plant (Organic and agricultural waste generated from the housing complex directly fuels the local biomass plant).
+
+Synergy 10: Highway Expansion & High-Speed Rail (Building them in parallel infrastructure corridors massively reduces land clearing and construction costs).
+
+Synergy 11: Research & Innovation Center & Data Center (The research center utilizes the massive compute of the data center, while testing new cooling/server technologies locally).
+
+Synergy 12: Smart Traffic Lights, Autonomous Vehicle Hub, & Smart Streetlights (Creating a fully integrated V2I (Vehicle to Infrastructure) network for autonomous fleets).
+
+Synergy 13: Geothermal Plant & Microgrid Network (Geothermal provides steady, localized baseload power perfectly suited for an independent microgrid).

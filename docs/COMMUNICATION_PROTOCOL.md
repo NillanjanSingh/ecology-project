@@ -2,6 +2,7 @@
 
 This document defines the exact JSON payloads for the robust architecture described in `GAME_ARCHITECTURE.md`. 
 For implementation alignment rules (validation, reconnect prompt restoration, strict type support), see `ARCHITECTURE_ALIGNMENT.md`.
+For source gameplay datasets and unresolved mechanics, see `GAME_DATA_MODEL.md`.
 
 ## Overview
 * **Transport:** WebSockets (WS)
@@ -64,7 +65,8 @@ Response to a `prompt_purchase` from the ESP32.
 {
   "type": "action_purchase",
   "payload": {
-    "action": "buy" // or "skip"
+    "infrastructure_name": "Solar Power Plant",
+    "action": "provider" // or "taker" or "skip"
   }
 }
 ```
@@ -159,50 +161,117 @@ Sent directly to the active player's phone telling them to scan a card.
 ```
 
 ### `prompt_purchase`
-Sent to the active player when they land on an unowned infrastructure tile. Starts a 60-second timer.
+Sent to the active player when they land on an infrastructure tile. Starts a 60-second timer.
 ```json
 {
   "type": "prompt_purchase",
   "payload": {
-    "name": "Solar Farm",
-    "description": "A large solar panel array that generates clean energy.",
-    "cost": 350,
-    "effects": {
-      "sustainability": 50,
-      "economy": 20
+    "name": "Solar Power Plant",
+    "location": 1,
+    "budget": 100000000,
+    "base_balance": 60,
+    "provider_option": {
+      "cost_points": 100000000,
+      "future_income_model": "service_usage_based"
+    },
+    "taker_option": {
+      "cost_points": 25000000,
+      "benefit_model": "25_percent_for_3_rounds"
+    },
+    "immediate_scores": {
+      "sustainability": 8,
+      "smart": 7,
+      "livability": 6,
+      "economy": 4
+    },
+    "future_scores": {
+      "rounds_until_activation": 3,
+      "sustainability": 10,
+      "smart": 8,
+      "livability": 7,
+      "economy": 8
+    },
+    "secondary_metrics": {
+      "emission": 2,
+      "happiness_index": 6,
+      "pollution_index": 2,
+      "biodiversity_health": 5,
+      "community_trust": 7
     }
   }
 }
 ```
 
+Notes:
+- `budget` comes from `Infrastructure_Tiles.csv`.
+- `provider_option.cost_points` equals the `budget`.
+- `taker_option.cost_points` equals `25%` of the provider cost for the next `3` rounds.
+- Every player starts with a base of `60cr`.
+
 ### `prompt_card_choice`
-Sent to the active player after they scan an optional Policy/Event card. Starts a 60-second timer.
+Sent to the active player after they scan a choice-based card from `Policy` or `Event-1`. Starts a 60-second timer.
 ```json
 {
   "type": "prompt_card_choice",
   "payload": {
-    "card_title": "Carbon Tax Regulation",
-    "description": "The city council proposes a new carbon tax.",
-    "choice_a": "Implement Strict Tax",
-    "choice_a_desc": "+80 Sustainability, -40 Economy",
-    "choice_b": "Relaxed Guidelines",
-    "choice_b_desc": "+20 Sustainability, +30 Economy"
+    "category": "Policy",
+    "card_title": "Carbon Tax",
+    "choice_a": {
+      "name": "Aggressive",
+      "effects": {
+        "sustainability": 9,
+        "smart": 8,
+        "livability": 4,
+        "economy": 3,
+        "emission": 2,
+        "happiness_index": 4,
+        "pollution_index": 2,
+        "biodiversity_health": 7,
+        "community_trust": 5
+      }
+    },
+    "choice_b": {
+      "name": "Moderate",
+      "effects": {
+        "sustainability": 6,
+        "smart": 6,
+        "livability": 6,
+        "economy": 6,
+        "emission": 5,
+        "happiness_index": 6,
+        "pollution_index": 5,
+        "biodiversity_health": 6,
+        "community_trust": 6
+      }
+    }
   }
 }
 ```
 
 ### `card_resolved`
-Broadcasted when a forced card (like a Disaster) is scanned. The ESP32 calculates the impact itself and tells everyone the result.
+Broadcasted when a forced card from `Disaster` or `Event-2` is resolved. The ESP32 calculates the final impact itself and tells everyone the result.
 ```json
 {
   "type": "card_resolved",
   "payload": {
+    "category": "Disaster",
     "card_title": "Flood",
     "target_faction": "Manufacturing",
-    "impact_level": "High",
+    "selected_outcome": "Standing Water",
+    "severity_basis": {
+      "sustainability": 32,
+      "pollution_index": 74
+    },
     "effects_applied": {
-      "liveability": -20,
-      "sustainability": -10
+      "sustainability": 2,
+      "smart": 2,
+      "livability": 1,
+      "economy": 1,
+      "emission": 7,
+      "happiness_index": 1,
+      "pollution_index": 8,
+      "biodiversity_health": 2,
+      "community_trust": 3
     }
   }
 }
@@ -231,13 +300,14 @@ Broadcasted if the 60-second timer expires while waiting for a player's choice.
 ```
 
 ### `game_state`
-The master state payload. Broadcasted after ANY mathematical change (metrics, points, eliminations, etc.). This ensures all 4 phones always display identical data.
+The master state payload. Broadcasted after ANY mathematical change (metrics, points, infrastructure decisions, synergies, eliminations, etc.). This ensures all 4 phones always display identical data.
 ```json
 {
   "type": "game_state",
   "payload": {
     "lap": 3,
     "game_phase": "in_progress", // or "ended"
+    "base_balance": 60,
     "players": [
       {
         "faction": "Natural",
@@ -248,6 +318,48 @@ The master state payload. Broadcasted after ANY mathematical change (metrics, po
           "smart": 500.0,
           "livability": 720.0,
           "economy": 580.0
+        },
+        "secondary_metrics": {
+          "emission": 32.0,
+          "happiness_index": 71.0,
+          "pollution_index": 28.0,
+          "biodiversity_health": 63.0,
+          "community_trust": 75.0
+        },
+        "infrastructure": [
+          {
+            "name": "Solar Power Plant",
+            "location": 1,
+            "role": "provider"
+          },
+          {
+            "name": "Desalination Plant",
+            "location": 5,
+            "role": "taker",
+            "provider_faction": "Natural"
+          }
+        ],
+        "active_synergies": [
+          {
+            "id": 1,
+            "name": "Solar Power Plant + Desalination Plant"
+          }
+        ],
+        "future_effect_queue": [
+          {
+            "source": "Solar Power Plant",
+            "rounds_remaining": 2,
+            "effects": {
+              "sustainability": 10,
+              "smart": 8,
+              "livability": 7,
+              "economy": 8
+            }
+          }
+        ],
+        "last_resolution": {
+          "type": "infrastructure",
+          "name": "Solar Power Plant"
         }
       },
       // ... (Includes the other 3 factions in the array)
@@ -255,6 +367,10 @@ The master state payload. Broadcasted after ANY mathematical change (metrics, po
   }
 }
 ```
+
+Notes:
+- `Emission` and `Pollution Index` are burden metrics where lower values are better.
+- Synergy points are added directly to the player's current total points when the ESP32 confirms a same-city ownership match.
 
 Valid faction values in all payloads are `Natural`, `Manufacturing`, `Tourism`, and `Technological`.
 

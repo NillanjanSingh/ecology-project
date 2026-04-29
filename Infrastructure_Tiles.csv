@@ -1,0 +1,35 @@
+Name,location,img,Budget,Synergy,Immediate Score-Sustainability,Immediate Score-Smart,Immediate Score-Livability,Immediate Score-Economy,Future Score-Round,Future Score-Sustainability,Future Score-Smart,Future Score-Livability,Future Score-Economy,Metrics-Emission,Metrics-Happiness Index,Metrics-Pollution Index (incl. AQI),Metrics-Biodiversity health,Metrics-Community Trust
+Solar Power Plant,1,1,100000000,1,8,7,6,4,3,10,8,7,8,2,6,2,5,7
+Wind Farm,2,2,120000000,2,8,6,4,4,3,9,7,5,7,2,5,2,3,6
+Smart Energy Grid,3,3,200000000,2,7,10,7,3,4,9,10,9,9,3,7,3,6,8
+Hydroelectric Dam,4,4,500000000,3,7,5,3,2,5,8,6,6,9,2,4,2,2,5
+Desalination Plant,5,5,300000000,1,4,7,8,3,2,4,8,9,6,6,8,5,3,8
+Water Treatment Plant,6,6,150000000,4,8,6,9,4,2,9,7,10,7,3,9,2,7,9
+Reservoir System,7,7,250000000,3,6,4,8,3,4,7,5,9,7,2,7,2,5,7
+Urban Forest,8,8,20000000,5,9,2,7,2,4,10,2,10,6,1,9,1,10,8
+Wetland Restoration,9,9,15000000,6,10,2,5,2,5,10,3,8,5,1,7,1,10,7
+City Park Network,10,10,30000000,7,7,3,9,4,2,8,3,10,7,2,10,2,6,9
+Recycling Plant,11,11,80000000,8,8,6,5,5,2,9,7,7,7,4,6,4,6,7
+Green Housing Complex,12,12,400000000,9,8,7,9,4,3,9,8,10,8,3,9,3,5,8
+Vertical Farming Center,13,13,100000000,4,8,9,6,3,3,9,10,8,8,2,7,2,5,7
+Mass Transit System,14,14,1000000000,7,7,8,6,2,5,10,9,10,9,3,8,3,5,8
+Highway Expansion,15,15,600000000,10,2,4,4,5,3,2,5,5,8,9,5,8,2,4
+Industrial Park,16,16,800000000,8,3,5,3,8,2,3,6,4,10,8,4,8,2,5
+Eco Tourism Park,17,17,50000000,6,8,4,7,5,3,9,5,8,8,2,8,2,8,8
+Research & Innovation Center,18,18,250000000,11,6,9,6,5,4,8,10,8,10,3,7,3,5,8
+Urban Cooling System,19,19,150000000,5,6,8,9,4,2,7,9,10,6,4,9,3,4,8
+Fire Control Station,20,20,40000000,3,5,6,9,5,1,5,7,10,6,3,9,2,5,10
+Data Center,21,21,500000000,11,3,9,4,3,4,4,10,5,9,8,5,6,4,6
+High-Speed Rail,22,22,2000000000,10,6,7,6,4,5,9,8,9,10,5,8,4,5,7
+Vertical Farm,23,23,50000000,4,8,8,7,4,3,9,9,8,7,3,7,2,6,8
+EV Charging Network,24,24,70000000,2,7,8,6,4,3,9,9,7,8,4,7,3,5,8
+Waste-to-Energy Plant,25,25,200000000,8,6,6,4,5,4,8,7,6,7,6,5,5,4,5
+BRT System,26,26,300000000,7,7,6,7,6,3,8,7,8,8,5,7,4,5,7
+Smart Traffic Lights,27,27,30000000,12,5,9,6,5,2,6,10,7,7,4,6,4,5,6
+Green Roof Initiative,28,28,10000000,5,9,3,8,3,2,10,4,9,5,2,8,2,7,8
+Geothermal Plant,29,29,350000000,13,8,6,5,3,5,9,7,6,8,2,5,2,5,6
+Smart Streetlights,30,30,25000000,12,6,8,6,5,2,7,9,7,6,3,6,3,5,7
+Autonomous Vehicle Hub,31,31,150000000,12,4,10,5,3,4,6,10,7,9,5,6,4,4,5
+Microgrid Network,32,32,90000000,13,8,9,7,4,3,9,10,8,8,3,7,3,5,8
+Carbon Capture Plant,33,33,400000000,8,9,7,4,2,5,10,8,5,5,1,5,2,5,6
+Biomass Power Plant,34,34,120000000,9,5,5,4,5,4,6,6,5,6,7,4,6,4,5
