@@ -73,7 +73,7 @@ class _LobbyPageState extends State<LobbyPage> {
     final deviceId = await DeviceIdentity.getDeviceId();
     final joinMessage = ProtocolMessage(
       type: MessageType.joinLobby,
-      payload: {'device_id': deviceId, 'platform': 'flutter'},
+      payload: {'device_id': deviceId},
     );
     widget.network.sendMessage(joinMessage.toJsonString());
 

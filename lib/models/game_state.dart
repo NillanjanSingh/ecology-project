@@ -781,7 +781,9 @@ class GameStateProvider extends ChangeNotifier {
   void sendCardDecisionResponse(String choice) {
     final msg = ProtocolMessage(
       type: MessageType.actionCardChoice,
-      payload: _withActorDeviceId({'choice': choice}),
+      payload: _withActorDeviceId({
+        'choice': choice,
+      }),
     );
     network.sendMessage(msg.toJsonString());
     _pendingDecision = null;
@@ -810,11 +812,13 @@ class GameStateProvider extends ChangeNotifier {
     String? targetDeviceId,
   }) {
     final payload = <String, dynamic>{
-      'amount': amount,
       'target_faction': factionToProtocolValue(targetFaction),
+      'amount': amount,
     };
     if (targetDeviceId != null && targetDeviceId.isNotEmpty) {
       payload['target_device_id'] = targetDeviceId;
+    } else {
+      payload['target_device_id'] = ''; // Ensure key exists even if empty, as protocol demands it. In reality, targetDeviceId should be populated if available in PlayerData.
     }
     return _withActorDeviceId(payload);
   }
