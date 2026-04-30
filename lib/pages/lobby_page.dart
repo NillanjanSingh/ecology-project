@@ -26,6 +26,7 @@ class _LobbyPageState extends State<LobbyPage> {
   bool _hasJoinedLobby = false;
   bool _readySent = false;
   String? _assignedFaction;
+  final TextEditingController _manualIpController = TextEditingController();
 
   int _joinedPlayers = 0;
   int _readyPlayers = 0;
@@ -45,6 +46,7 @@ class _LobbyPageState extends State<LobbyPage> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _manualIpController.dispose();
     super.dispose();
   }
 
@@ -56,7 +58,7 @@ class _LobbyPageState extends State<LobbyPage> {
       _status = 'Connecting to ESP...';
     });
 
-    final ip = await widget.network.connect();
+    final ip = await widget.network.connect(hostOverride: _manualIpController.text);
     if (!mounted) return;
     if (ip == null) {
       setState(() => _isJoining = false);
@@ -86,7 +88,7 @@ class _LobbyPageState extends State<LobbyPage> {
       _status = 'Reconnecting to ESP...';
     });
 
-    final ip = await widget.network.connect();
+    final ip = await widget.network.connect(hostOverride: _manualIpController.text);
     if (!mounted) return;
     if (ip == null) {
       setState(() => _isJoining = false);
@@ -397,6 +399,34 @@ class _LobbyPageState extends State<LobbyPage> {
             subtitle: 'The board remains authoritative. Wait for `player_assignment` before treating your faction as confirmed.',
           ),
           const SizedBox(height: 20),
+          TextField(
+            controller: _manualIpController,
+            enabled: !_hasJoinedLobby && !_isJoining,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: const TextStyle(color: AppChrome.text),
+            decoration: InputDecoration(
+              labelText: 'Local ESP32 IP (optional)',
+              hintText: 'Example: 192.168.1.42',
+              hintStyle: const TextStyle(color: AppChrome.textMuted),
+              labelStyle: const TextStyle(color: AppChrome.textMuted),
+              prefixIcon: const Icon(Icons.lan_rounded),
+              filled: true,
+              fillColor: AppChrome.bgAlt.withValues(alpha: 0.72),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: AppChrome.line),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: AppChrome.line),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: AppChrome.cyan),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: (_isJoining || _hasJoinedLobby) ? null : _joinLobby,
             icon: _isJoining
@@ -444,7 +474,7 @@ class _LobbyPageState extends State<LobbyPage> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'The app moves into gameplay only after the ESP32 confirms the live session with `game_start` or `full_sync`.',
+                  'Leave the IP blank to use mDNS. Fill it in when `.local` resolution fails on the current network.',
                   style: TextStyle(color: AppChrome.textMuted, height: 1.45),
                 ),
               ],

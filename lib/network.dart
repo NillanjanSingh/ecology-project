@@ -38,17 +38,24 @@ class NetworkManager {
     return resolvedIp;
   }
 
-  Future<String?> connect() async {
+  Future<String?> connect({String? hostOverride}) async {
     try {
-      onStatusUpdate?.call("Resolving $mDnsHostname...");
-      String? ipAddress = await resolveMdns(mDnsHostname);
+      final manualHost = hostOverride?.trim();
+      String? ipAddress;
+      if (manualHost != null && manualHost.isNotEmpty) {
+        ipAddress = manualHost;
+        onStatusUpdate?.call("Connecting to $ipAddress...");
+      } else {
+        onStatusUpdate?.call("Resolving $mDnsHostname...");
+        ipAddress = await resolveMdns(mDnsHostname);
 
-      if (ipAddress == null) {
-        onStatusUpdate?.call("Failed to resolve $mDnsHostname");
-        return null;
+        if (ipAddress == null) {
+          onStatusUpdate?.call("Failed to resolve $mDnsHostname");
+          return null;
+        }
+
+        onStatusUpdate?.call("Connecting to $ipAddress...");
       }
-
-      onStatusUpdate?.call("Connecting to $ipAddress...");
 
       channel = WebSocketChannel.connect(Uri.parse('ws://$ipAddress:81/'));
 
