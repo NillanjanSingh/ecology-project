@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
+import '../theme/app_chrome.dart';
 
 class GameOverPage extends StatelessWidget {
   final List<PlayerData> players;
@@ -21,77 +22,122 @@ class GameOverPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0E14),
-      appBar: AppBar(title: const Text('Game Over')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 6),
-            if (sorted.isNotEmpty)
-              Text(
-                'Winner: ${sorted.first.faction.displayName}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFFFFD54F),
-                  fontWeight: FontWeight.w700,
+      body: Container(
+        decoration: AppChrome.screenBackground(),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: AppChrome.panelDecoration(
+                    color: AppChrome.bgAlt,
+                    border: AppChrome.gold,
+                    radius: 30,
+                    glow: true,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppChrome.sectionTitle(
+                        'SESSION RESOLVED',
+                        subtitle: allEliminated
+                            ? 'Every city collapsed under pressure.'
+                            : allInnerRing
+                            ? 'Every city reached developed status.'
+                            : 'Final strategic standings from the board authority.',
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w900,
+                          color: AppChrome.text,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (sorted.isNotEmpty)
+                        Text(
+                          'Winner: ${sorted.first.faction.displayName}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppChrome.gold,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: sorted.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final p = sorted[index];
+                            return Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: AppChrome.panelDecoration(
+                                color: AppChrome.panelSoft,
+                                border: p.faction.color,
+                                radius: 20,
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: p.faction.color.withValues(alpha: 0.25),
+                                    child: Icon(p.faction.icon, color: p.faction.color),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          p.faction.displayName,
+                                          style: const TextStyle(
+                                            color: AppChrome.text,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          p.isEliminated
+                                              ? 'Eliminated'
+                                              : p.isInnerRing
+                                              ? 'Developed City'
+                                              : 'Outer Ring',
+                                          style: const TextStyle(
+                                            color: AppChrome.textMuted,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${p.metrics.totalScore}',
+                                    style: const TextStyle(
+                                      color: AppChrome.gold,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.separated(
-                itemCount: sorted.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final p = sorted[index];
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: p.faction.color.withValues(alpha: 0.5)),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: p.faction.color.withValues(alpha: 0.25),
-                          child: Icon(p.faction.icon, color: p.faction.color),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            p.faction.displayName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${p.metrics.totalScore}',
-                          style: const TextStyle(
-                            color: Color(0xFFFFCA28),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
             ),
-          ],
+          ),
         ),
       ),
     );

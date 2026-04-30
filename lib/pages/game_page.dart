@@ -8,6 +8,7 @@ import '../widgets/modals/purchase_dialog.dart';
 import '../widgets/modals/card_decision_dialog.dart';
 import '../widgets/trade_drawer.dart';
 import 'game_over_page.dart';
+import '../theme/app_chrome.dart';
 
 /// The Mayor's Terminal — main game dashboard.
 ///
@@ -139,10 +140,15 @@ class _GamePageState extends State<GamePage> {
             );
 
         return Scaffold(
-          backgroundColor: const Color(0xFF0A0E14),
+          backgroundColor: AppChrome.bg,
           endDrawer: const TradeDrawer(),
           body: Stack(
             children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(decoration: AppChrome.screenBackground()),
+                ),
+              ),
               SafeArea(
                 child: Column(
                   children: [
@@ -153,7 +159,6 @@ class _GamePageState extends State<GamePage> {
                     // ─── Ascension Progress ───
                     _buildProgressBar(progress, metrics.totalScore),
                     // ─── Body ───
-                    Text("device id: ${gs.deviceId}"),
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -197,9 +202,9 @@ class _GamePageState extends State<GamePage> {
       child: Container(
         color: Colors.black.withValues(alpha: 0.85),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
               const Icon(Icons.nfc_rounded, size: 80, color: Colors.white),
               const SizedBox(height: 24),
               Text(
@@ -365,6 +370,14 @@ class _GamePageState extends State<GamePage> {
                         ),
                       ),
                     ],
+                    const SizedBox(height: 6),
+                    Text(
+                      gs.deviceId == null ? 'Awaiting device identity' : 'Node ${gs.deviceId}',
+                      style: const TextStyle(
+                        color: AppChrome.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -377,10 +390,10 @@ class _GamePageState extends State<GamePage> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppChrome.panelSoft.withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: AppChrome.line,
                     ),
                   ),
                   child: Column(
@@ -462,17 +475,21 @@ class _GamePageState extends State<GamePage> {
             size: 16,
           ),
           const SizedBox(width: 8),
-          Text(
-            isMyTurn
-                ? "IT's YOUR TURN! Spin the encoder."
-                : gs.hasAssignedFaction
-                ? "Waiting for ${gs.currentTurnFaction!.displayName}..."
-                : "Faction pending. Waiting for ${gs.currentTurnFaction!.displayName}...",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-              color: isMyTurn ? Colors.white : gs.currentTurnFaction!.color,
+          Flexible(
+            child: Text(
+              isMyTurn
+                  ? "IT'S YOUR TURN. SPIN THE ENCODER."
+                  : gs.hasAssignedFaction
+                  ? "Waiting for ${gs.currentTurnFaction!.displayName}..."
+                  : "Faction pending. Waiting for ${gs.currentTurnFaction!.displayName}...",
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: isMyTurn ? Colors.white : gs.currentTurnFaction!.color,
+              ),
             ),
           ),
         ],
@@ -498,7 +515,13 @@ class _GamePageState extends State<GamePage> {
           )!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.panelSoft,
+        border: color,
+        radius: 22,
+      ),
       child: Column(
         children: [
           Row(
@@ -546,12 +569,12 @@ class _GamePageState extends State<GamePage> {
 
   Widget _buildBottomBar() {
     return Container(
-      height: 40,
+      height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1117),
+        color: AppChrome.bgAlt,
         border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          top: const BorderSide(color: AppChrome.line),
         ),
       ),
       child: Row(

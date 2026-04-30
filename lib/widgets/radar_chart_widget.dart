@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
+import '../theme/app_chrome.dart';
 
 /// A premium radar chart that displays the four core metrics.
 /// Adapts its accent color based on the player's faction.
@@ -24,32 +25,42 @@ class MetricsRadarChart extends StatelessWidget {
     final accentColor = faction?.color ?? const Color(0xFF78909C);
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.25),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.08),
-            blurRadius: 24,
-            spreadRadius: 4,
-          ),
-        ],
+      padding: const EdgeInsets.all(20),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.panelSoft,
+        border: accentColor,
+        radius: 28,
+        glow: true,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'CITY METRICS',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 3,
-              color: accentColor.withValues(alpha: 0.8),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: AppChrome.sectionTitle(
+                  'CITY METRICS',
+                  subtitle: 'Real-time strategic posture across the four civic pillars.',
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.35)),
+                ),
+                child: Text(
+                  '${metrics.totalScore} TOTAL',
+                  style: TextStyle(
+                    color: accentColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -87,10 +98,10 @@ class MetricsRadarChart extends StatelessWidget {
                 radarBackgroundColor: Colors.transparent,
                 radarBorderData: const BorderSide(color: Colors.transparent),
                 titlePositionPercentageOffset: 0.2,
-                titleTextStyle: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.7),
+                titleTextStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppChrome.text,
                 ),
                 tickCount: 4,
                 ticksTextStyle: const TextStyle(
@@ -102,26 +113,26 @@ class MetricsRadarChart extends StatelessWidget {
                   width: 1,
                 ),
                 gridBorderData: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: accentColor.withValues(alpha: 0.15),
                   width: 1,
                 ),
                 getTitle: (index, angle) {
                   switch (index) {
                     case 0:
                       return RadarChartTitle(
-                        text: '🌿 ${metrics.sustainability.round()}',
+                        text: 'SUS ${metrics.sustainability.round()}',
                       );
                     case 1:
                       return RadarChartTitle(
-                        text: '💡 ${metrics.smart.round()}',
+                        text: 'SMT ${metrics.smart.round()}',
                       );
                     case 2:
                       return RadarChartTitle(
-                        text: '🏠 ${metrics.livability.round()}',
+                        text: 'LIV ${metrics.livability.round()}',
                       );
                     case 3:
                       return RadarChartTitle(
-                        text: '💰 ${metrics.economy.round()}',
+                        text: 'ECO ${metrics.economy.round()}',
                       );
                     default:
                       return const RadarChartTitle(text: '');
@@ -134,14 +145,13 @@ class MetricsRadarChart extends StatelessWidget {
           const SizedBox(height: 8),
           // Legend
           Wrap(
-            spacing: 16,
-            runSpacing: 4,
-            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              _legendItem('Sustainability', '🌿'),
-              _legendItem('Smart', '💡'),
-              _legendItem('Livability', '🏠'),
-              _legendItem('Economy', '💰'),
+              _legendPill('Sustainability', metrics.sustainability.round(), accentColor),
+              _legendPill('Smart', metrics.smart.round(), accentColor),
+              _legendPill('Livability', metrics.livability.round(), accentColor),
+              _legendPill('Economy', metrics.economy.round(), accentColor),
             ],
           ),
         ],
@@ -149,21 +159,22 @@ class MetricsRadarChart extends StatelessWidget {
     );
   }
 
-  Widget _legendItem(String label, String emoji) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 12)),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.white.withValues(alpha: 0.5),
-            fontWeight: FontWeight.w500,
-          ),
+  Widget _legendPill(String label, int value, Color accentColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppChrome.bgAlt.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        '$label  $value',
+        style: const TextStyle(
+          fontSize: 11,
+          color: AppChrome.textMuted,
+          fontWeight: FontWeight.w600,
         ),
-      ],
+      ),
     );
   }
 }

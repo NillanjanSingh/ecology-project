@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
+import '../theme/app_chrome.dart';
 
 class StatusLog extends StatelessWidget {
   final List<ActiveCard> activeCards;
@@ -13,7 +14,14 @@ class StatusLog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.panelSoft,
+        border: AppChrome.line,
+        radius: 28,
+      ),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (activeCards.isNotEmpty) ...[
@@ -41,13 +49,14 @@ class StatusLog extends StatelessWidget {
         else
           ...logEntries.take(20).map(_buildLogTile),
       ],
+      ),
     );
   }
 
   Widget _sectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.5)),
+        Icon(icon, size: 16, color: AppChrome.textMuted),
         const SizedBox(width: 8),
         Text(
           title,
@@ -55,7 +64,7 @@ class StatusLog extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 2.5,
-            color: Colors.white.withValues(alpha: 0.5),
+            color: AppChrome.textMuted,
           ),
         ),
       ],
@@ -67,8 +76,8 @@ class StatusLog extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: card.color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: AppChrome.bgAlt.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: card.color.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -98,11 +107,11 @@ class StatusLog extends StatelessWidget {
                 if (card.description.isNotEmpty)
                   Text(
                     card.description,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                    style: const TextStyle(
+                      color: AppChrome.textMuted,
                       fontSize: 11,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
               ],
@@ -156,50 +165,59 @@ class StatusLog extends StatelessWidget {
         '${t.minute.toString().padLeft(2, '0')}:'
         '${t.second.toString().padLeft(2, '0')}';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 5),
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: dotColor.withValues(alpha: 0.5),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$timeStr  ',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  TextSpan(
-                    text: entry.message,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppChrome.bgAlt.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: dotColor.withValues(alpha: 0.22)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 5),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: dotColor.withValues(alpha: 0.5),
+                    blurRadius: 4,
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$timeStr  ',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                        color: AppChrome.textMuted,
+                      ),
+                    ),
+                    TextSpan(
+                      text: entry.message,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppChrome.text,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

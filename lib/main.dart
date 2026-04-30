@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'network.dart';
 import 'models/game_state.dart';
 import 'pages/home_page.dart';
+import 'theme/app_chrome.dart';
 
 void main() {
   runApp(const EcologyApp());
@@ -34,15 +35,49 @@ class _EcologyAppState extends State<EcologyApp> {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF0A0E14),
-          primaryColor: const Color(0xFF1565C0),
+          scaffoldBackgroundColor: AppChrome.bg,
+          primaryColor: AppChrome.cyan,
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF42A5F5),
-            secondary: Color(0xFF66BB6A),
-            surface: Color(0xFF141B24),
+            primary: AppChrome.cyan,
+            secondary: AppChrome.mint,
+            surface: AppChrome.panel,
           ),
           fontFamily: 'Roboto',
           useMaterial3: true,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            foregroundColor: AppChrome.text,
+            elevation: 0,
+            centerTitle: true,
+          ),
+          textTheme: ThemeData.dark().textTheme.apply(
+            bodyColor: AppChrome.text,
+            displayColor: AppChrome.text,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppChrome.cyan,
+              foregroundColor: AppChrome.bg,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ),
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppChrome.text,
+              side: const BorderSide(color: AppChrome.line),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+          ),
         ),
         home: HomePage(network: network),
       ),

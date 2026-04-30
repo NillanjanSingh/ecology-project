@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../device_identity.dart';
 import '../network.dart';
 import '../protocol.dart';
+import '../theme/app_chrome.dart';
 import 'game_page.dart';
 
 class LobbyPage extends StatefulWidget {
@@ -38,7 +39,6 @@ class _LobbyPageState extends State<LobbyPage> {
       if (!mounted) return;
       setState(() => _status = status);
     };
-
     _subscription = widget.network.messageStream.listen(_onRawMessage);
   }
 
@@ -49,9 +49,7 @@ class _LobbyPageState extends State<LobbyPage> {
   }
 
   Future<void> _joinLobby() async {
-    if (_isJoining || _hasJoinedLobby) {
-      return;
-    }
+    if (_isJoining || _hasJoinedLobby) return;
 
     setState(() {
       _isJoining = true;
@@ -59,14 +57,9 @@ class _LobbyPageState extends State<LobbyPage> {
     });
 
     final ip = await widget.network.connect();
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     if (ip == null) {
-      setState(() {
-        _isJoining = false;
-      });
+      setState(() => _isJoining = false);
       return;
     }
 
@@ -95,7 +88,6 @@ class _LobbyPageState extends State<LobbyPage> {
 
     final ip = await widget.network.connect();
     if (!mounted) return;
-
     if (ip == null) {
       setState(() => _isJoining = false);
       return;
@@ -116,9 +108,7 @@ class _LobbyPageState extends State<LobbyPage> {
   }
 
   Future<void> _sendReady() async {
-    if (!_hasJoinedLobby || _readySent) {
-      return;
-    }
+    if (!_hasJoinedLobby || _readySent) return;
 
     final deviceId = await DeviceIdentity.getDeviceId();
     final readyMessage = ProtocolMessage(
@@ -149,14 +139,11 @@ class _LobbyPageState extends State<LobbyPage> {
     if (message.type == MessageType.gameStart ||
         message.type == MessageType.fullSync) {
       _goToGame();
-      return;
     }
   }
 
   void _applyPlayerAssignment(Map<String, dynamic> payload) {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     final faction = payload['faction']?.toString();
     final confirmedReady = payload['ready_confirmed'] == true;
@@ -186,21 +173,13 @@ class _LobbyPageState extends State<LobbyPage> {
     ]);
     final playersList = payload['players'] as List<dynamic>?;
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       _hasJoinedLobby = true;
-      if (joined != null) {
-        _joinedPlayers = joined;
-      }
-      if (ready != null) {
-        _readyPlayers = ready;
-      }
-      if (total != null && total > 0) {
-        _totalPlayers = total;
-      }
+      if (joined != null) _joinedPlayers = joined;
+      if (ready != null) _readyPlayers = ready;
+      if (total != null && total > 0) _totalPlayers = total;
       if (playersList != null) {
         _players = playersList.map((e) => e as Map<String, dynamic>).toList();
       }
@@ -220,24 +199,17 @@ class _LobbyPageState extends State<LobbyPage> {
   int? _readInt(Map<String, dynamic> payload, List<String> keys) {
     for (final key in keys) {
       final value = payload[key];
-      if (value is int) {
-        return value;
-      }
+      if (value is int) return value;
       if (value is String) {
         final parsed = int.tryParse(value);
-        if (parsed != null) {
-          return parsed;
-        }
+        if (parsed != null) return parsed;
       }
     }
     return null;
   }
 
   void _goToGame() {
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => GamePage(network: widget.network)),
@@ -246,174 +218,319 @@ class _LobbyPageState extends State<LobbyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final wide = size.width >= 820;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Pre-Game Lobby')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 16),
-            Icon(
-              Icons.groups_rounded,
-              size: 72,
-              color: Theme.of(context).colorScheme.secondary,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Join Lobby',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _status,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontSize: 14,
+      body: Container(
+        decoration: AppChrome.screenBackground(),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1120),
+                child: wide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 5, child: _buildHeroPanel()),
+                          const SizedBox(width: 18),
+                          Expanded(flex: 4, child: _buildControlPanel()),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _buildHeroPanel(),
+                          const SizedBox(height: 18),
+                          _buildControlPanel(),
+                        ],
+                      ),
               ),
             ),
-            const SizedBox(height: 26),
-            _LobbyCounterCard(
-              joinedPlayers: _joinedPlayers,
-              readyPlayers: _readyPlayers,
-              totalPlayers: _totalPlayers,
-              players: _players,
-              assignedFaction: _assignedFaction,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: (_isJoining || _hasJoinedLobby) ? null : _joinLobby,
-              icon: _isJoining
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.login_rounded),
-              label: Text(_hasJoinedLobby ? 'Joined Lobby' : 'Join Lobby'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: (_isJoining || _hasJoinedLobby)
-                  ? null
-                  : _reconnectGame,
-              icon: const Icon(Icons.restore_rounded),
-              label: const Text('Reconnect to Active Game'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: (!_hasJoinedLobby || _readySent) ? null : () => _sendReady(),
-              icon: const Icon(Icons.check_circle_outline_rounded),
-              label: Text(_readySent ? 'Ready Sent' : "I'm Ready"),
-            ),
-            const Spacer(),
-            Text(
-              'Game starts automatically when ESP32 confirms all players are ready.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontSize: 12,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _LobbyCounterCard extends StatelessWidget {
-  final int joinedPlayers;
-  final int readyPlayers;
-  final int totalPlayers;
-  final List<Map<String, dynamic>> players;
-  final String? assignedFaction;
-
-  const _LobbyCounterCard({
-    required this.joinedPlayers,
-    required this.readyPlayers,
-    required this.totalPlayers,
-    required this.players,
-    required this.assignedFaction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final joinedText = '$joinedPlayers / $totalPlayers';
-    final readyText = '$readyPlayers / $totalPlayers';
-
+  Widget _buildHeroPanel() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      padding: const EdgeInsets.all(24),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.bgAlt,
+        radius: 30,
+        glow: true,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildRow('Players Joined', joinedText, Icons.people_outline_rounded),
-          const Divider(height: 20),
-          _buildRow('Players Ready', readyText, Icons.done_all_rounded),
-          if (assignedFaction != null) ...[
-            const Divider(height: 20),
-            _buildRow(
-              'Your Faction',
-              assignedFaction!,
-              Icons.badge_outlined,
-            ),
-          ],
-          if (players.isNotEmpty) ...[
-            const Divider(height: 20),
-            const Text(
-              'Connected Factions:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white70,
+          AppChrome.sectionTitle(
+            'PRE-GAME LOBBY',
+            subtitle: 'Connect, confirm identity, and wait for the board to arm the next session.',
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _metricCard(
+                'Connected',
+                '$_joinedPlayers / $_totalPlayers',
+                Icons.hub_rounded,
+                AppChrome.cyan,
               ),
+              _metricCard(
+                'Ready',
+                '$_readyPlayers / $_totalPlayers',
+                Icons.check_circle_outline_rounded,
+                AppChrome.mint,
+              ),
+              _metricCard(
+                'Assignment',
+                _assignedFaction ?? 'Pending',
+                Icons.verified_user_outlined,
+                AppChrome.gold,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: AppChrome.panelDecoration(
+              color: AppChrome.panelSoft,
+              border: AppChrome.line,
+              radius: 24,
             ),
-            const SizedBox(height: 8),
-            ...players.map((p) {
-              final String faction = p['faction']?.toString() ?? 'Unknown';
-              final bool isReady = p['is_ready'] == true || p['ready'] == true;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      isReady ? Icons.check_circle : Icons.hourglass_empty,
-                      color: isReady ? Colors.greenAccent : Colors.orangeAccent,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(faction, style: const TextStyle(color: Colors.white)),
-                  ],
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _status.contains('Connected') ||
+                            _status.contains('Joined') ||
+                            _status.contains('Ready')
+                        ? AppChrome.mint.withValues(alpha: 0.18)
+                        : AppChrome.coral.withValues(alpha: 0.18),
+                  ),
+                  child: Icon(
+                    _status.contains('Connected') ||
+                            _status.contains('Joined') ||
+                            _status.contains('Ready')
+                        ? Icons.podcasts_rounded
+                        : Icons.portable_wifi_off_rounded,
+                    color: _status.contains('Connected') ||
+                            _status.contains('Joined') ||
+                            _status.contains('Ready')
+                        ? AppChrome.mint
+                        : AppChrome.coral,
+                  ),
                 ),
-              );
-            }),
-          ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Link Status',
+                        style: AppChrome.eyebrow.copyWith(color: AppChrome.text),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _status,
+                        style: const TextStyle(
+                          color: AppChrome.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Connected Cities',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppChrome.text,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_players.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: AppChrome.panelDecoration(
+                color: AppChrome.panelSoft,
+                border: AppChrome.line,
+                radius: 20,
+              ),
+              child: const Text(
+                'No confirmed players yet. Join the lobby to begin synchronization.',
+                style: TextStyle(color: AppChrome.textMuted),
+              ),
+            )
+          else
+            ..._players.map(_buildPlayerTile),
         ],
       ),
     );
   }
 
-  Widget _buildRow(String label, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.85)),
+  Widget _buildControlPanel() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.panel,
+        radius: 30,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppChrome.sectionTitle(
+            'Operator Actions',
+            subtitle: 'The board remains authoritative. Wait for `player_assignment` before treating your faction as confirmed.',
           ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-        ),
-      ],
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: (_isJoining || _hasJoinedLobby) ? null : _joinLobby,
+            icon: _isJoining
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.login_rounded),
+            label: Text(_hasJoinedLobby ? 'JOINED LOBBY' : 'JOIN LOBBY'),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: (_isJoining || _hasJoinedLobby) ? null : _reconnectGame,
+            icon: const Icon(Icons.restore_rounded),
+            label: const Text('RECONNECT ACTIVE GAME'),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: (!_hasJoinedLobby || _readySent) ? null : _sendReady,
+            icon: const Icon(Icons.check_circle_outline_rounded),
+            label: Text(_readySent ? 'READY LOCKED IN' : 'SEND READY'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppChrome.gold,
+              foregroundColor: AppChrome.bg,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: AppChrome.panelDecoration(
+              color: AppChrome.bgAlt,
+              border: AppChrome.line,
+              radius: 22,
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Launch Condition',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppChrome.text,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'The app moves into gameplay only after the ESP32 confirms the live session with `game_start` or `full_sync`.',
+                  style: TextStyle(color: AppChrome.textMuted, height: 1.45),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.all(16),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.panelSoft,
+        border: color,
+        radius: 22,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 10),
+          Text(label, style: AppChrome.eyebrow),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: AppChrome.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerTile(Map<String, dynamic> player) {
+    final faction = player['faction']?.toString() ?? 'Unknown';
+    final ready = player['is_ready'] == true || player['ready'] == true;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: AppChrome.panelDecoration(
+        color: AppChrome.panelSoft,
+        border: ready ? AppChrome.mint : AppChrome.line,
+        radius: 18,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: ready
+                  ? AppChrome.mint.withValues(alpha: 0.16)
+                  : AppChrome.bgAlt.withValues(alpha: 0.8),
+            ),
+            child: Icon(
+              ready ? Icons.check_rounded : Icons.schedule_rounded,
+              color: ready ? AppChrome.mint : AppChrome.textMuted,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              faction,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          Text(
+            ready ? 'READY' : 'WAITING',
+            style: TextStyle(
+              color: ready ? AppChrome.mint : AppChrome.textMuted,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

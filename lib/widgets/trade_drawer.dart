@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/game_state.dart';
 import '../protocol.dart';
+import '../theme/app_chrome.dart';
 
 class TradeDrawer extends StatefulWidget {
   const TradeDrawer({super.key});
@@ -80,22 +81,21 @@ class _TradeDrawerState extends State<TradeDrawer> {
         final me = gs.myPlayerData;
 
         return Drawer(
-          backgroundColor: const Color(0xFF121A23),
+          backgroundColor: AppChrome.bgAlt,
           child: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
                   padding: const EdgeInsets.all(20),
-                  color: Colors.white.withValues(alpha: 0.05),
-                  child: const Text(
+                  decoration: AppChrome.panelDecoration(
+                    color: AppChrome.panel,
+                    border: AppChrome.line,
+                    radius: 0,
+                  ),
+                  child: AppChrome.sectionTitle(
                     'PLAYERS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                      color: Colors.white70,
-                    ),
+                    subtitle: 'Inspect ownership and move funds with explicit device targeting.',
                   ),
                 ),
                 Padding(
@@ -153,11 +153,11 @@ class _TradeDrawerState extends State<TradeDrawer> {
                               subtitle: Text(
                                 opp.isEliminated
                                     ? 'ELIMINATED'
-                                    : 'Bank: ¤${opp.bankBalance}',
+                                    : 'Bank: ¤${opp.bankBalance}${opp.isInnerRing ? ' • Developed City' : ''}',
                                 style: TextStyle(
                                   color: opp.isEliminated
                                       ? Colors.redAccent
-                                      : Colors.white70,
+                                      : AppChrome.textMuted,
                                 ),
                               ),
                               tileColor: isSelected
@@ -186,7 +186,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
                               ? 'Select an opponent to trade'
                               : 'Trading with ${_selectedOpponent!.faction.displayName}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppChrome.text,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -198,10 +198,10 @@ class _TradeDrawerState extends State<TradeDrawer> {
                           enabled: _selectedOpponent != null,
                           decoration: InputDecoration(
                             labelText: 'Amount (Max ¤${gs.bankBalance})',
-                            labelStyle: const TextStyle(color: Colors.white54),
+                            labelStyle: const TextStyle(color: AppChrome.textMuted),
                             border: const OutlineInputBorder(),
                             enabledBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.white24),
+                              borderSide: BorderSide(color: AppChrome.line),
                             ),
                           ),
                         ),
@@ -245,7 +245,9 @@ class _TradeDrawerState extends State<TradeDrawer> {
           ),
         ),
         _ownershipCard(
-          title: me == null ? 'You' : 'You (${me.faction.displayName})',
+          title: me == null
+              ? 'You'
+              : 'You (${me.faction.displayName}${me.isInnerRing ? ' • Developed City' : ''})',
           items: me?.ownedItems ?? const [],
           color: me?.faction.color ?? Colors.white70,
         ),
@@ -287,11 +289,11 @@ class _TradeDrawerState extends State<TradeDrawer> {
           ),
           const SizedBox(height: 8),
           if (items.isEmpty)
-            const Text('No items yet', style: TextStyle(color: Colors.white54))
+            const Text('No assets reported yet', style: TextStyle(color: AppChrome.textMuted))
           else
             Text(
               items.join(', '),
-              style: const TextStyle(color: Colors.white70, height: 1.4),
+              style: const TextStyle(color: AppChrome.text, height: 1.4),
             ),
         ],
       ),
