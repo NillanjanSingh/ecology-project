@@ -1,9 +1,9 @@
-String formatAmount(num value, {String suffix = 'cr'}) {
+String formatAmount(num value) {
   final abs = value.abs().toDouble();
   final sign = value < 0 ? '-' : '';
 
   if (abs < 1000) {
-    return '$sign${abs.toStringAsFixed(2)} $suffix';
+    return '$sign${abs.toStringAsFixed(2)}';
   }
 
   const units = ['K', 'M', 'B', 'T'];
@@ -16,5 +16,5 @@ String formatAmount(num value, {String suffix = 'cr'}) {
   }
 
   final unit = unitIndex >= 0 ? units[unitIndex] : '';
-  return '$sign${scaled.toStringAsFixed(2)} $unit $suffix';
+  return '$sign${scaled.toStringAsFixed(2)}$unit';
 }

@@ -40,6 +40,10 @@ class _GamePageState extends State<GamePage> {
     widget.network.onStatusUpdate = (status) {
       if (mounted) setState(() => _networkStatus = status);
     };
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<GameStateProvider>().requestOwnershipState();
+    });
   }
 
   // --- Modal launchers ---
