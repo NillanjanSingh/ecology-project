@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/amount_format.dart';
 
 /// Modal dialog shown when ESP32 sends a prompt_purchase message.
 class PurchaseDialog extends StatelessWidget {
@@ -155,7 +156,7 @@ class PurchaseDialog extends StatelessWidget {
                         children: [
                           _statColumn(
                             'PROVIDER',
-                            '¤$providerCost',
+                            formatAmount(providerCost),
                             const Color(0xFFEF5350),
                           ),
                           Container(
@@ -165,7 +166,7 @@ class PurchaseDialog extends StatelessWidget {
                           ),
                           _statColumn(
                             'BALANCE',
-                            '¤$currentBalance',
+                            formatAmount(currentBalance),
                             canAffordProvider
                                 ? const Color(0xFF66BB6A)
                                 : const Color(0xFFEF5350),
@@ -288,7 +289,7 @@ class PurchaseDialog extends StatelessWidget {
                           ),
                           child: Text(
                             takerAvailable
-                                ? 'TAKER (¤$takerCost)'
+                                ? 'TAKER (${formatAmount(takerCost!)})'
                                 : 'TAKER UNAVAILABLE',
                             textAlign: TextAlign.center,
                             style: const TextStyle(

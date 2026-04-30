@@ -9,6 +9,7 @@ import '../widgets/modals/card_decision_dialog.dart';
 import '../widgets/trade_drawer.dart';
 import 'game_over_page.dart';
 import '../theme/app_chrome.dart';
+import '../utils/amount_format.dart';
 
 /// The Mayor's Terminal — main game dashboard.
 ///
@@ -429,9 +430,9 @@ class _GamePageState extends State<GamePage> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            '¤$bank',
+                            formatAmount(bank),
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFFFFCA28),
                             ),

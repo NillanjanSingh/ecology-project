@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/game_state.dart';
 import '../protocol.dart';
 import '../theme/app_chrome.dart';
+import '../utils/amount_format.dart';
 
 class TradeDrawer extends StatefulWidget {
   const TradeDrawer({super.key});
@@ -61,7 +62,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
     });
     
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Transferred ¤$amount to ${selected.faction.displayName}')),
+      SnackBar(content: Text('Transferred ${formatAmount(amount)} to ${selected.faction.displayName}')),
     );
     
     Navigator.of(context).pop(); // Close drawer
@@ -153,7 +154,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
                               subtitle: Text(
                                 opp.isEliminated
                                     ? 'ELIMINATED'
-                                    : 'Bank: ¤${opp.bankBalance}${opp.isInnerRing ? ' • Developed City' : ''}',
+                                    : 'Bank: ${formatAmount(opp.bankBalance)}${opp.isInnerRing ? ' • Developed City' : ''}',
                                 style: TextStyle(
                                   color: opp.isEliminated
                                       ? Colors.redAccent
@@ -197,7 +198,7 @@ class _TradeDrawerState extends State<TradeDrawer> {
                           style: const TextStyle(color: Colors.white),
                           enabled: _selectedOpponent != null,
                           decoration: InputDecoration(
-                            labelText: 'Amount (Max ¤${gs.bankBalance})',
+                            labelText: 'Amount (Max ${formatAmount(gs.bankBalance)})',
                             labelStyle: const TextStyle(color: AppChrome.textMuted),
                             border: const OutlineInputBorder(),
                             enabledBorder: const OutlineInputBorder(
